@@ -1,90 +1,104 @@
+// src/components/BackgroundArt.tsx
 'use client'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 
-type Pos = { x: string; y: string; scale?: number; rotate?: number }
-
 type Props = {
+  /** Десктопный фон (лежит в /public) */
   src?: string
+  /** Мобильный фон (если нет — используется src) */
+  mobileSrc?: string
+  /** object-position-Y для десктопа (например '38%') */
   objectY?: string
+  /** object-position-Y для мобилы (если не задан — берём objectY) */
+  objectYMobile?: string
+
+  /** Пар над водой */
   mist?: boolean
-  lightning?: boolean
-  lightningPositions?: Pos[]
-  lightningMinDelay?: number
-  lightningMaxDelay?: number
-  /** добавлен для совместимости с page.tsx */
+
+  /** ❄ снег */
+  snow?: boolean
+  /** кол-во снежинок */
+  snowCount?: number
+  /** базовая скорость падения (s) — больше = медленнее */
+  snowSpeedBase?: number
+  /** амплитуда «ветра» (px) */
+  snowDrift?: number
+
+  /** совместимость */
   parallax?: boolean
 }
 
 export default function BackgroundArt({
   src = '/siggyland/world-bg-desktop.jpg',
-  objectY = '38%',
+  mobileSrc,
+  objectY = '55%',
+  objectYMobile,
+
   mist = true,
-  lightning = true,
-  lightningPositions,
-  lightningMinDelay = 2200,
-  lightningMaxDelay = 5200,
-  parallax = false, // ← добавили дефолт
+
+  snow = true,
+  snowCount = 1200,
+  snowSpeedBase = 22,
+  snowDrift = 40,
+
+  parallax = false,
 }: Props) {
-  // 3 точки слева + 3 справа
-  const pts = useMemo<Pos[]>(
-    () =>
-      lightningPositions ?? [
-        // left cluster
-        { x: '18%', y: '16%', scale: 1.0, rotate: -6 },
-        { x: '28%', y: '18%', scale: 0.95, rotate: 4 },
-        { x: '38%', y: '15%', scale: 0.95, rotate: -3 },
-        // right cluster
-        { x: '62%', y: '18%', scale: 0.95, rotate: 3 },
-        { x: '76%', y: '16%', scale: 1.0, rotate: -5 },
-        { x: '88%', y: '14%', scale: 1.05, rotate: 6 },
-      ],
-    [lightningPositions]
-  )
+  // ✅ чтобы не было SSR/CSR mismatch — эффекты (снег) рисуем только после mount
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
 
-  const [active, setActive] = useState<number | null>(null)
-  const [flashOn, setFlashOn] = useState(false)
-  const timerRef = useRef<number | null>(null)
+  // фолбэк для проблемных форматов
+  const triedFallbackRef = useRef(false)
+  const onImgError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    if (triedFallbackRef.current) return
+    triedFallbackRef.current = true
 
-  useEffect(() => {
-    if (!lightning || pts.length === 0) return
-    const plan = () => {
-      const delay =
-        Math.floor(Math.random() * (lightningMaxDelay - lightningMinDelay + 1)) +
-        lightningMinDelay
-      timerRef.current = window.setTimeout(() => {
-        const i = Math.floor(Math.random() * pts.length)
-        setActive(i)
-        setFlashOn(true)
-        window.setTimeout(() => setFlashOn(false), 420)
-        window.setTimeout(() => {
-          setActive(null)
-          plan()
-        }, 440)
-      }, delay) as unknown as number
+    const img = e.currentTarget
+    const cur = img.currentSrc || img.src
+
+    // если упал mobileSrc — уводим на desktop src
+    if (mobileSrc && cur.includes(mobileSrc)) {
+      img.src = src
+      return
     }
-    plan()
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current)
-    }
-  }, [lightning, pts, lightningMinDelay, lightningMaxDelay])
+
+    // дальше — замены формата
+    if (cur.endsWith('.webp')) img.src = cur.replace(/\.webp$/, '.png')
+    else if (cur.endsWith('.jpg') || cur.endsWith('.jpeg')) img.src = cur.replace(/\.jpe?g$/, '.png')
+    else if (cur.endsWith('.png')) img.style.display = 'none'
+  }
+
+  const yMobile = objectYMobile ?? objectY
 
   return (
     <div
       className={`bgArt bgArt--full ${parallax ? 'bgArt--parallax' : ''}`}
       aria-hidden
+      style={
+        {
+          // ✅ управляем object-position через CSS переменные (и media-query)
+          ['--bgY' as any]: objectY,
+          ['--bgYMobile' as any]: yMobile,
+        } as React.CSSProperties
+      }
     >
-      {/* Фон: cover — как раньше */}
+      {/* фон */}
       <div className="bgArt__imageWrap bgArt--cover">
-        {src ? (
-          <picture>
-            <img src={src} alt="" style={{ objectPosition: `center ${objectY}` }} />
-          </picture>
-        ) : (
-          <div className="bgArt__fallback" />
-        )}
+        <picture>
+          {mobileSrc ? <source media="(max-width: 700px)" srcSet={mobileSrc} /> : null}
+          <img
+            src={src}
+            alt=""
+            loading="eager"
+            decoding="async"
+            fetchPriority="high"
+            onError={onImgError}
+            className="bgArt__img"
+          />
+        </picture>
       </div>
 
-      {/* Пар */}
+      {/* пар */}
       {mist && (
         <div className="bgArt__fx">
           <div className="mist mist--pond" />
@@ -93,15 +107,10 @@ export default function BackgroundArt({
         </div>
       )}
 
-      {/* Молнии */}
-      {lightning && (
-        <div className="lightLayer">
-          <div className={`skyFlash ${flashOn ? 'is-on' : ''}`} />
-          {active != null && <Bolt {...pts[active]} />}
-        </div>
-      )}
+      {/* ❄ снег — только после mount */}
+      {mounted && snow && <SnowLayer count={snowCount} speedBase={snowSpeedBase} drift={snowDrift} />}
 
-      {/* Хотспот по статуе */}
+      {/* хотспот по статуе */}
       <div className="bgArt__hotspots">
         <a
           className="hotspot hotspot--cat"
@@ -111,31 +120,122 @@ export default function BackgroundArt({
         />
       </div>
 
-      {/* локальная шторка уже есть в page.tsx */}
+      {/* стили (оставляем локально как у тебя) */}
+      <style jsx global>{`
+        .bgArt__img{
+          width:100%;
+          height:100%;
+          object-fit:cover;
+          object-position:center var(--bgY, 50%);
+          display:block;
+        }
+        @media (max-width:700px){
+          .bgArt__img{
+            object-position:center var(--bgYMobile, var(--bgY, 50%));
+          }
+        }
+
+        .snowLayer{
+          position:absolute; inset:0; pointer-events:none; overflow:hidden;
+          z-index:2;
+        }
+        .flake{
+          position:absolute;
+          top:-10px;
+          border-radius:50%;
+          background: radial-gradient(circle at 40% 35%, #ffffff, #eafff6 60%, rgba(255,255,255,0) 72%);
+          box-shadow: 0 0 10px rgba(180,255,240,.35);
+          animation:
+            snow-fall var(--dur, 14s) linear var(--delay, 0s) infinite,
+            snow-sway var(--swayDur, 3.6s) ease-in-out var(--swayDelay, 0s) infinite alternate;
+          will-change: transform, margin-left;
+        }
+        @keyframes snow-fall { to { transform: translateY(110vh); } }
+        @keyframes snow-sway {
+          0%   { margin-left: calc(var(--wind, 24px) * -1); }
+          100% { margin-left: var(--wind, 24px); }
+        }
+        @media (prefers-reduced-motion: reduce){
+          .snowLayer{ display:none; }
+        }
+      `}</style>
     </div>
   )
 }
 
-function Bolt({ x, y, scale = 1, rotate = 0 }: Pos) {
+/* ——— снег ——— */
+function SnowLayer({
+  count = 160,
+  speedBase = 14,
+  drift = 28,
+}: {
+  count?: number
+  speedBase?: number
+  drift?: number
+}) {
+  const rnd = (seed: number) => {
+    const x = Math.sin(seed * 999.733) * 10000
+    return x - Math.floor(x)
+  }
+
+  // ✅ делаем строки через toFixed, чтобы даже при SSR всё совпадало 1:1
+  const f2 = (n: number) => n.toFixed(2)
+  const f4 = (n: number) => n.toFixed(4)
+  const px = (n: number) => `${f4(n)}px`
+  const pct = (n: number) => `${f4(n)}%`
+  const sec = (n: number) => `${f4(n)}s`
+
+  const flakes = useMemo(() => {
+    return Array.from({ length: count }).map((_, i) => {
+      const left = rnd(i * 1.13) * 100
+      const size = 2 + rnd(i * 1.91) * 5
+      const opacity = 0.45 + rnd(i * 2.71) * 0.5
+      const delay = rnd(i * 3.17) * 8
+      const dur = speedBase * (0.8 + rnd(i * 4.01) * 0.9)
+      const swayDur = 2.6 + rnd(i * 5.03) * 3.4
+      const swayDelay = rnd(i * 6.07) * 2
+      const blur = rnd(i * 7.11) * 0.8
+      const wind = drift * (0.5 + rnd(i * 9.17) * 0.7)
+      const topStart = -15 + rnd(i * 10.19) * 10
+
+      return {
+        left: pct(left),
+        top: pct(topStart),
+        size: px(size),
+        opacity: f4(opacity),
+        blur: px(blur),
+        dur: sec(dur),
+        delay: sec(delay),
+        swayDur: sec(swayDur),
+        swayDelay: sec(swayDelay),
+        wind: px(wind),
+      }
+    })
+  }, [count, speedBase, drift])
+
   return (
-    <div
-      className="bolt is-on"
-      style={{
-        left: x,
-        top: y,
-        transform: `translate(-50%,-10%) rotate(${rotate}deg) scale(${scale})`,
-      }}
-    >
-      <svg viewBox="0 0 120 240" width="120" height="240" aria-hidden>
-        <polyline
-          className="stroke"
-          points="60,0 58,26 70,48 55,76 72,102 54,134 68,156 50,188 64,210 60,240"
+    <div className="snowLayer" aria-hidden>
+      {flakes.map((f, idx) => (
+        <span
+          key={idx}
+          className="flake"
+          style={
+            {
+              left: f.left,
+              top: f.top,
+              width: f.size,
+              height: f.size,
+              opacity: f.opacity as any,
+              filter: `blur(${f.blur})`,
+              ['--dur' as any]: f.dur,
+              ['--delay' as any]: f.delay,
+              ['--swayDur' as any]: f.swayDur,
+              ['--swayDelay' as any]: f.swayDelay,
+              ['--wind' as any]: f.wind,
+            } as React.CSSProperties
+          }
         />
-        <polyline className="stroke thin" points="58,26 44,44 52,58" />
-        <polyline className="stroke thin" points="55,76 40,94 48,106" />
-        <polyline className="stroke thin" points="54,134 40,150 50,162" />
-        <polyline className="stroke thin" points="50,188 36,204 46,214" />
-      </svg>
+      ))}
     </div>
   )
 }

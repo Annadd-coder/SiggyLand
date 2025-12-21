@@ -4,20 +4,21 @@ import type { ReactNode } from 'react'
 import type { Metadata, Viewport } from 'next'
 import Header from '../components/Header'
 import SoftCurtain from '../components/SoftCurtain'
+import AudioToggle from '../components/AudioToggle'
 
-// МЕТАДАННЫЕ
+// --- METADATA (title/description/icons остаются здесь)
 export const metadata: Metadata = {
   title: 'SiggyLand',
   description: 'A Ritual portal with living products.',
-  // важно: файлы лежат в /public, но в url пишем без /public
+  // файлы лежат в /public → в url пишем без /public
   icons: {
-    icon: '/icon.png',   // один файл — ок
-    apple: '/icon.png',  // тот же файл пойдёт и как apple-touch
-    // shortcut: '/favicon.ico', // подключишь позже, если будет
+    icon: '/icon.png',    // одна иконка — ок
+    apple: '/icon.png',   // можно использовать тот же файл
+    // shortcut: '/favicon.ico', // раскомментируешь, если добавишь
   },
 }
 
-// VIEWPORT (сюда перенесли themeColor)
+// --- VIEWPORT: сюда переносим themeColor (чтобы не было варнингов)
 export const viewport: Viewport = {
   themeColor: '#06110D',
 }
@@ -30,6 +31,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         {children}
         {/* глобальная шторка для мягких переходов */}
         <SoftCurtain />
+        {/* компактная кнопка музыки (поверх всего) */}
+        <AudioToggle src="/siggyland/audio/siggy-winter-loop.mp3" volume={0.18} />
       </body>
     </html>
   )

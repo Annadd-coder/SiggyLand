@@ -1,76 +1,201 @@
-.askWrap{
-  min-height: calc(100vh - var(--headerH));
-  padding: 56px min(5vw,48px) 72px;
-  display: grid;
-  grid-template-rows: auto auto auto;
-  justify-items: center;
-  align-content: center;
-  row-gap: 22px;
-  text-align: center;
-}
-
-.titleBlock{ font-family:'Fredoka','Inter',ui-sans-serif; }
-
-.soonPill{
-  display:inline-block; padding:4px 10px; border-radius:999px;
-  font-weight:900; letter-spacing:.5px; font-size:11px; line-height:1;
-  color:#0b0b0f; background:linear-gradient(180deg,#e5ffe7,#c8ffd3);
-  border:2px solid #0b0b0f; box-shadow:0 2px 0 rgba(0,0,0,.3);
-}
-
-.askTitle{
-  margin:12px 0 6px;
-  font-weight:900; letter-spacing:.2px; line-height:1.04;
-  font-size:clamp(28px,5.2vw,56px);
-  max-width:980px;
-  text-shadow:0 1px 0 rgba(0,0,0,.35);
-}
-
-.askSub{
-  margin:0; font-weight:800; line-height:1.25;
-  font-size:clamp(14px,1.9vw,18px); opacity:.9;
-}
-
-/* ——— свечение как в твоём примере ——— */
-.halo{
+/* === Page (winter starry sky) ===================================== */
+.page{
   position: relative;
-  display: inline-block;
-  isolation: isolate;
+  min-height: calc(100svh - var(--headerH));
+  padding-top: 12px;
 }
-
-/* мягкий ореол позади кота */
-.halo::before{
+.page::before{
   content:"";
-  position:absolute;
-  inset: -8% -10% -12% -10%;
+  position: fixed; inset:0; z-index:0; pointer-events:none;
   background:
-    radial-gradient(65% 70% at 50% 60%, rgba(160,255,230,.28), transparent 72%),
-    radial-gradient(90% 90% at 50% 60%, rgba(140,240,210,.16), transparent 85%);
-  filter: blur(18px) saturate(1.05);
-  z-index:-1;
+    radial-gradient(1200px 720px at 12% -10%, rgba(60,90,180,.28), transparent 60%),
+    radial-gradient(1000px 620px at 88% 10%, rgba(40,70,140,.22), transparent 55%),
+    linear-gradient(180deg, #0c1631, #0a1225 60%, #09101c);
+}
+.page::after{
+  content:"";
+  position: fixed; inset:0; z-index:0; pointer-events:none; opacity:.42;
+  background:
+    radial-gradient(2px 2px at 16% 22%, rgba(255,255,255,.9), transparent 60%),
+    radial-gradient(1.6px 1.6px at 32% 34%, rgba(255,255,255,.85), transparent 60%),
+    radial-gradient(1.6px 1.6px at 54% 18%, rgba(255,255,255,.9), transparent 60%),
+    radial-gradient(1.4px 1.4px at 72% 28%, rgba(255,255,255,.85), transparent 60%),
+    radial-gradient(1px 1px at 10% 70%, rgba(255,255,255,.7), transparent 60%),
+    radial-gradient(1px 1px at 80% 46%, rgba(255,255,255,.75), transparent 60%);
+  animation: askTwinkle 6s ease-in-out infinite alternate;
+}
+@keyframes askTwinkle { 0%{opacity:.34} 100%{opacity:.52} }
+
+/* Layout shell */
+.shell{ position: relative; z-index: 1; }
+
+/* === Header row ==================================================== */
+.headerRow{
+  display:flex; align-items:center; justify-content:space-between;
+  gap: 16px; padding: 8px 0 14px 0;
+}
+.brandLeft{ display:flex; align-items:center; gap:10px }
+.siggyMark svg{ display:block }
+.siggyMark circle{ fill:#bff4e3; filter: drop-shadow(0 2px 8px rgba(127,229,201,.35)) }
+.title{
+  margin:0; font-family:'Fredoka','Baloo 2','Nunito',ui-rounded,system-ui,sans-serif;
+  font-weight:900; letter-spacing:.4px; font-size: clamp(22px, 2.8vw, 28px);
+  text-shadow:0 2px 0 rgba(0,0,0,.25);
+}
+.badgeBeta{
+  margin-left:4px; padding:6px 10px; border-radius:999px; font-weight:900; font-size:11px;
+  color:#06110D; background: linear-gradient(180deg,#dfffee,#c7ffe0);
+  border:2px solid #0b0b0f50; box-shadow:0 2px 0 rgba(0,0,0,.35);
+}
+.dotOnline{
+  width:10px; height:10px; border-radius:50%;
+  margin-left:6px; background:radial-gradient(circle, #8ff7d8, #3dd6ad);
+  box-shadow:0 0 10px rgba(120,255,220,.7), 0 0 2px #1a3b32 inset;
 }
 
-/* сам кот: лёгкая подсветка + тень */
-.catImg{
-  display:block;
-  width: min(360px, 42vw);
-  height: auto;
-  border-radius: 12px;
-  /* если файл PNG с прозрачным фоном — свечение ляжет по контуру */
-  filter:
-    drop-shadow(0 0 14px rgba(160,255,230,.22))
-    drop-shadow(0 22px 46px rgba(0,0,0,.42));
-}
-
-/* back */
-.backBtn{
+.headerActions{ display:flex; gap:10px; align-items:center }
+.pillLink{
   display:inline-flex; align-items:center; gap:8px;
-  padding:10px 14px; border-radius:12px;
-  border:2px solid #0b0b0f;
-  background: linear-gradient(180deg,#e5ffe7,#c8ffd3);
-  color:#0b0b0f; font-weight:800; text-decoration:none;
-  box-shadow:0 2px 0 rgba(0,0,0,.28);
-  font-size:14px; margin-top: clamp(28px, 6.5vw, 46px);
-  transition: transform .12s ease, filter .12s ease;
+  padding:10px 14px; border-radius:14px; font-weight:800; text-decoration:none;
+  color:#06110D; background: linear-gradient(180deg,#7fe5c9,#4cc9a6);
+  border:2px solid #0b0b0f; box-shadow:0 8px 0 rgba(0,0,0,.48), 0 14px 34px rgba(0,0,0,.40);
 }
-.backBtn:hover{ transform: translateY(-1px); filter:brightness(1.02) }
+.pillLink:hover{ filter:brightness(1.03); transform: translateY(-1px); transition:.12s ease }
+.ghost{
+  color:#d7fff3; background: rgba(255,255,255,.06);
+  border-color: rgba(255,255,255,.18);
+  box-shadow:0 8px 24px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.18);
+}
+
+/* === Chat card (frosted) ========================================== */
+.card{
+  position: relative;
+  border-radius: 18px;
+  border: 1.5px solid transparent;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03)) padding-box,
+    linear-gradient(180deg, rgba(190,210,255,.38), rgba(120,150,230,.14)) border-box;
+  backdrop-filter: blur(10px) saturate(1.06);
+  -webkit-backdrop-filter: blur(10px) saturate(1.06);
+  box-shadow: 0 22px 60px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.25);
+  padding: clamp(14px, 2.8vw, 22px);
+}
+
+/* Stream */
+.stream{
+  max-height: min(56vh, 520px);
+  overflow:auto;
+  padding: 4px 2px 8px 2px;
+  scroll-behavior:smooth;
+}
+.stream::-webkit-scrollbar{ width:10px }
+.stream::-webkit-scrollbar-thumb{
+  background: linear-gradient(180deg, #9debd8, #6fd9bf);
+  border-radius:999px; border:3px solid rgba(0,0,0,0);
+}
+
+/* Messages */
+.msg{ display:flex; gap:10px; margin: 8px 4px }
+.mUser{ justify-content:flex-end }
+.mBot{ justify-content:flex-start }
+
+.msgAva{
+  width:28px; height:28px; flex:none; border-radius:50%;
+  background: radial-gradient(60% 60% at 50% 45%, #bff4e3, #88e3ca);
+  display:grid; place-items:center; overflow:hidden;
+  box-shadow:0 8px 18px rgba(0,0,0,.35);
+}
+.msgAva svg{ width:18px; height:18px; }
+.msgAva circle{ fill:#0b0b0f }
+
+.bubble{
+  position: relative;
+  max-width: 70ch;
+  padding: 12px 14px 18px;
+  border-radius: 14px;
+  font-size: 15px; line-height: 1.55;
+  background: rgba(6,17,13,.42);
+  border: 1px solid rgba(255,255,255,.14);
+  color: #eafdf5;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 12px 30px rgba(0,0,0,.28);
+}
+.mUser .bubble{
+  background: linear-gradient(180deg, rgba(140,255,230,.14), rgba(110,230,195,.10));
+  border-color: rgba(190,255,240,.18);
+}
+.meta{ margin-top:6px; opacity:.55; font-size:11px }
+.tail{
+  position:absolute; bottom:-7px; left:14px; width:14px; height:14px; transform:rotate(45deg);
+  background: inherit; border-left: inherit; border-bottom: inherit;
+  box-shadow: inherit;
+}
+.mUser .tail{ left:auto; right:14px }
+
+/* Typing */
+.typing{ display:flex; gap:6px; align-items:center }
+.dot{
+  width:8px; height:8px; border-radius:50%;
+  background: #eaffff; opacity:.9;
+  animation: dotBlink 1.2s infinite ease-in-out;
+}
+.dot:nth-child(2){ animation-delay: .2s }
+.dot:nth-child(3){ animation-delay: .4s }
+@keyframes dotBlink{ 0%,100%{transform:translateY(0); opacity:.6} 50%{transform:translateY(-2px); opacity:1} }
+
+/* Quick chips */
+.quickWrap{ display:flex; flex-wrap:wrap; gap:10px; margin: 10px 2px 6px }
+.quick{
+  display:inline-flex; align-items:center; gap:8px;
+  padding:8px 12px; border-radius:999px; font-weight:800; font-size:13px;
+  text-decoration:none; color:#06110D;
+  background: linear-gradient(180deg,#dfffee,#c7ffe0);
+  border:2px solid #0b0b0f40; box-shadow:0 4px 16px rgba(0,0,0,.30);
+}
+.quick:hover{ transform: translateY(-1px); filter: brightness(1.02); transition:.12s ease }
+.quickPaw{ filter: drop-shadow(0 0 12px rgba(127,229,201,.45)) }
+
+/* Composer */
+.composerWrap{ margin-top: 12px }
+.srOnly{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap }
+.composer{
+  display:flex; align-items:center; gap:8px;
+  padding:8px; border-radius:14px; background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.12);
+}
+.paw svg{ width:22px; height:22px; fill:#cffff1 }
+.input{
+  flex:1; min-width:0; padding:12px 12px; border-radius:10px; border:1px solid transparent;
+  background: rgba(255,255,255,.04); color:#fff; outline:none;
+}
+.input:focus{ border-color: rgba(127,229,201,.6); box-shadow:0 0 0 4px rgba(127,229,201,.12) }
+.send{
+  width:38px; height:38px; border-radius:12px; border:2px solid #0b0b0f; cursor:pointer;
+  display:grid; place-items:center;
+  background: linear-gradient(180deg,#7fe5c9,#4cc9a6);
+  box-shadow:0 8px 18px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.25);
+  color:#06110D;
+}
+.send[disabled]{ opacity:.6; cursor:default; filter:grayscale(.1) }
+.send svg{ fill:#06110D }
+.spin{
+  width:16px; height:16px; border-radius:50%;
+  border:3px solid rgba(0,0,0,.18); border-top-color:#06110D;
+  animation: spin .8s linear infinite;
+}
+@keyframes spin{ to{ transform:rotate(360deg) } }
+
+.err{ margin-top:8px; color:#ffd2d2; font-weight:700 }
+.footerLine{
+  margin-top:8px; font-size:12px; color:#a9cfc4; display:flex; gap:8px; align-items:center; flex-wrap:wrap
+}
+.sep{ opacity:.5 }
+.hintKey kbd{
+  padding:2px 6px; border-radius:6px; background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.16); font-weight:800
+}
+
+/* Responsive */
+@media (max-width: 720px){
+  .headerActions{ display:none }
+  .stream{ max-height: 52vh }
+}

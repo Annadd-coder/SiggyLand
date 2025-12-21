@@ -3,10 +3,15 @@
 
 import { useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import dynamic from 'next/dynamic'
+import Image from 'next/image'
 import BackgroundArt from '@/components/BackgroundArt'
 import CatSticker from '@/components/CatSticker'
 import IntroOverlay from '@/components/IntroOverlay'
 import AnchorLayer, { AnchorPinPct } from '@/components/AnchorLayer'
+
+// ✅ AudioToggle без SSR, чтобы не ловить hydration mismatch из-за styled-jsx в компоненте
+const AudioToggle = dynamic(() => import('@/components/AudioToggle'), { ssr: false })
 
 export default function Home() {
   const curtainRef = useRef<HTMLDivElement | null>(null)
@@ -16,7 +21,7 @@ export default function Home() {
     // запрет скролла на главной
     const html = document.documentElement
     const body = document.body
-    const style = body.style as any // ← для overscrollBehavior / touchAction
+    const style = body.style as any
 
     const prevHtmlOverflow = html.style.overflow
     const prevBodyOverflow = body.style.overflow
@@ -28,11 +33,9 @@ export default function Home() {
     style.overscrollBehavior = 'none'
     style.touchAction = 'none'
 
-    // мягкая навигация для всех ссылок со спец-атрибутом
+    // мягкая навигация
     const onClick = (e: MouseEvent) => {
       const a = e.currentTarget as HTMLAnchorElement
-
-      // модификаторы/target=_blank — не перехватываем
       const me = e as MouseEvent
       if (me.metaKey || me.ctrlKey || me.shiftKey || me.altKey || a.target === '_blank') return
 
@@ -42,7 +45,6 @@ export default function Home() {
       const url = new URL(rawHref, window.location.href)
       const isInternal = url.origin === window.location.origin && url.pathname.startsWith('/')
 
-      // локальная шторка + глобальный флаг
       curtainRef.current?.classList.add('is-on')
       try {
         sessionStorage.setItem('softnav:next', '1')
@@ -86,26 +88,62 @@ export default function Home() {
         src="/siggyland/world-bg-desktop.jpg"
         parallax={false}
         mist
-        lightning
-        lightningMinDelay={2200}
-        lightningMaxDelay={5200}
         objectY="38%"
+        /* ↓ молнии убраны, включаем снег */
+        snow
+        snowCount={180}
+        snowSpeedBase={14}
+        snowDrift={28}
       />
+
+      {/* GIF-оверлей — ДВИЖЕНИЕ КАК У КОТИКОВ:
+          меняй left/top/width прямо в style ниже */}
+      <div className="gifOverlay" aria-hidden>
+        {/* Пример 1 — проценты (как у твоего Foundation-кота) */}
+        <div
+          id="gif-2"
+          className="gifSticker"
+          style={{ left: '35%', top: '82%', width: '20vw' }}
+        >
+          <Image
+            className="gifImg"
+            src="/siggyland/gifs/gif-2.gif"
+            alt=""
+            width={800}
+            height={800}
+            unoptimized
+          />
+        </div>
+
+        {/* Пример 2 — calc(% ± px) */}
+        <div
+          id="gif-1"
+          className="gifSticker"
+          style={{ left: 'calc(50.2% + 50px)', top: 'calc(63.4% + 95px)', width: '25vw' }}
+        >
+          <Image
+            className="gifImg"
+            src="/siggyland/gifs/gif-1.gif"
+            alt=""
+            width={800}
+            height={800}
+            unoptimized
+          />
+        </div>
+      </div>
 
       {/* ─────────────────────────────
           СТАБИЛЬНЫЕ КОТИКИ через AnchorLayer
-          Дизайн-плоскость: 1920×1080
-          Перенос твоих координат: left/top в % и calc(% ± px) → xp/yp + dx/dy
          ───────────────────────────── */}
       <AnchorLayer
         baseW={1920}
         baseH={1080}
         targetSelector=".bgArt.bgArt--full"
-        objectY="38%"   // ← СОВПАДАЕТ с objectY у BackgroundArt
-        shiftY={-24}    // ← общий подъём всех котиков
+        objectY="38%"
+        shiftY={-24}
       >
-        {/* 1 — Links (был: left calc(73.2% + 50px), top calc(47.4% + 95px), 7.2vw) */}
-        <AnchorPinPct xp={73.2} yp={46.8} dx={+50} dy={+95}>
+        {/* 1 — Links */}
+        <AnchorPinPct xp={73.2} yp={63.8} dx={+50} dy={+95}>
           <CatSticker
             id="anchor-res"
             data-softnav="1"
@@ -113,39 +151,42 @@ export default function Home() {
             alt="Siggy cat — Ritual links"
             title="Open Ritual Links"
             href="https://links.ritual.tools/"
-            left="0" top="0"
-            width="7.2vw"
+            left="0"
+            top="0"
+            width="8.2vw"
             hint="Are you a developer? Click here!"
             hintDx={0}
             hintDy={-8}
           />
         </AnchorPinPct>
 
-        {/* 2 — Academy (88%, 85%, 9.2vw) */}
-        <AnchorPinPct xp={88} yp={76}>
+        {/* 2 — Academy */}
+        <AnchorPinPct xp={70} yp={85}>
           <CatSticker
             data-softnav="1"
             src="/siggyland/cats/academy-cat.png"
             alt="Ritual Academy"
             title="Open Ritual Academy"
             href="https://ritual.academy/about/"
-            left="0" top="0"
-            width="9.2vw"
+            left="0"
+            top="0"
+            width="8.2vw"
             hint="Want to learn more? Ritual Academy is here."
             hintDx={-6}
             hintDy={-10}
           />
         </AnchorPinPct>
 
-        {/* 3 — X (left calc(96% - 10px), top calc(40% - 60px), 8.4vw) */}
-        <AnchorPinPct xp={95} yp={39} dx={-10} dy={-60}>
+        {/* 3 — X */}
+        <AnchorPinPct xp={95} yp={37} dx={-10} dy={-60}>
           <CatSticker
             data-softnav="1"
             src="/siggyland/cats/twitter-cat.png"
             alt="Ritual on X"
             title="Open Ritual on X"
             href="https://x.com/ritualnet"
-            left="0" top="0"
+            left="0"
+            top="0"
             width="8.4vw"
             hint="Ritual on X "
             hintDx={-4}
@@ -153,56 +194,59 @@ export default function Home() {
           />
         </AnchorPinPct>
 
-        {/* 4 — Foundation (77%, 87%, 9vw) */}
-        <AnchorPinPct xp={77} yp={81}>
+        {/* 4 — Foundation */}
+        <AnchorPinPct xp={85} yp={81}>
           <CatSticker
             data-softnav="1"
             src="/siggyland/cats/foundation-cat.png"
             alt="Ritual Foundation"
             title="Open Ritual Foundation"
             href="https://www.ritualfoundation.com/"
-            left="0" top="0"
-            width="9vw"
+            left="0"
+            top="0"
+            width="11vw"
             hint="Ritual Foundation website"
             hintDx={0}
             hintDy={-10}
           />
         </AnchorPinPct>
 
-        {/* 5 — Discord (корректированная точка) */}
-        <AnchorPinPct xp={68} yp={69}>
+        {/* 5 — Discord */}
+        <AnchorPinPct xp={65} yp={67}>
           <CatSticker
             data-softnav="1"
             src="/siggyland/cats/discord-cat.png"
             alt="Ritual Discord"
             title="Open Ritual Discord"
             href="https://discord.gg/GnY9Ew9cMX"
-            left="0" top="0"
-            width="9.6vw"
+            left="0"
+            top="0"
+            width="8.6vw"
             hint="Join on Discord.  here lives  the community "
             hintDx={2}
             hintDy={-8}
           />
         </AnchorPinPct>
 
-        {/* 6 — Ritual Foundation X (84%, 34%, 9vw) */}
-        <AnchorPinPct xp={85} yp={34}>
+        {/* 6 — Ritual Foundation X */}
+        <AnchorPinPct xp={83} yp={32}>
           <CatSticker
             data-softnav="1"
             src="/siggyland/cats/ritualfnd-x-cat.png"
             alt="Ritual Foundation X"
             title="Open Ritual Foundation X"
             href="https://x.com/ritualfnd"
-            left="0" top="0"
-            width="9vw"
+            left="0"
+            top="0"
+            width="8vw"
             hint="Open Ritual Foundation X"
             hintDx={-6}
             hintDy={-12}
           />
         </AnchorPinPct>
 
-        {/* 7 — Relic Labs (23%, 53%, 8.8vw) */}
-        <AnchorPinPct xp={23} yp={53}>
+        {/* 7 — Relic Labs */}
+        <AnchorPinPct xp={13} yp={76}>
           <CatSticker
             id="anchor-eco"
             data-softnav="1"
@@ -210,7 +254,8 @@ export default function Home() {
             alt="Relic Labs on X"
             title="Open Relic Labs on X"
             href="https://x.com/RelicLabs_xyz"
-            left="0" top="0"
+            left="0"
+            top="0"
             width="8.8vw"
             hint="Relic Labs. AI-native finance engine on Ritual"
             hintDx={0}
@@ -219,13 +264,10 @@ export default function Home() {
         </AnchorPinPct>
       </AnchorLayer>
 
-      {/* ─────────────────────────────
-          LEGACY (оставляю нетронутыми, но не рендерим)
-          НИЧЕГО НЕ УДАЛЯЮ — можно включить для сравнения, поменяв false → true
-         ───────────────────────────── */}
+      {/* LEGACY (не рендерим) */}
       {false && (
         <>
-          {/* Кот 1 — links (как было) */}
+          {/* Кот 1 — links */}
           <CatSticker
             id="anchor-res"
             data-softnav="1"
@@ -237,7 +279,6 @@ export default function Home() {
             top={`calc(47.4% + 95px)`}
             width="7.2vw"
           />
-
           {/* Кот 2 — Academy */}
           <CatSticker
             data-softnav="1"
@@ -247,9 +288,8 @@ export default function Home() {
             href="https://ritual.academy/about/"
             left="88%"
             top="85%"
-            width="9.2vw"
+            width="8.2vw"
           />
-
           {/* Кот 3 — X */}
           <CatSticker
             data-softnav="1"
@@ -261,7 +301,6 @@ export default function Home() {
             top="calc(40% - 60px)"
             width="8.4vw"
           />
-
           {/* Кот 4 — Foundation */}
           <CatSticker
             data-softnav="1"
@@ -269,11 +308,10 @@ export default function Home() {
             alt="Ritual Foundation"
             title="Open Ritual Foundation"
             href="https://www.ritualfoundation.com/"
-            left="77%"
-            top="87%"
-            width="9vw"
+            left="70%"
+            top="50%"
+            width="10vw"
           />
-
           {/* 5 — Discord */}
           <CatSticker
             data-softnav="1"
@@ -281,11 +319,10 @@ export default function Home() {
             alt="Ritual Discord"
             title="Open Ritual Discord"
             href="https://discord.gg/GnY9Ew9cMX"
-            left="70%"
+            left="60%"
             top="78%"
-            width="9.6vw"
+            width="10.6vw"
           />
-
           {/* 6 — Ritual Foundation X */}
           <CatSticker
             data-softnav="1"
@@ -293,11 +330,10 @@ export default function Home() {
             alt="Ritual Foundation X"
             title="Open Ritual Foundation X"
             href="https://x.com/ritualfnd"
-            left="84%"
-            top="33%"
-            width="9vw"
+            left="86%"
+            top="35%"
+            width="8vw"
           />
-
           {/* 7 — Relic Labs */}
           <CatSticker
             id="anchor-eco"
@@ -306,7 +342,7 @@ export default function Home() {
             alt="Relic Labs on X"
             title="Open Relic Labs on X"
             href="https://x.com/RelicLabs_xyz"
-            left="23%"
+            left="43%"
             top="57%"
             width="8.8vw"
           />
@@ -319,7 +355,15 @@ export default function Home() {
       {/* онбординг (1 раз) */}
       <IntroOverlay />
 
-      <style jsx>{`
+      {/* ✅ ВОТ ОНА КНОПКА МУЗЫКИ КАК БЫЛА */}
+      <AudioToggle
+        src="/siggyland/audio/siggy-winter-loop.mp3"
+        volume={0.18}
+        topOffset="calc(var(--headerH) + 12px)"
+      />
+
+      {/* ✅ ВАЖНО: без styled-jsx, чтобы не было jsx-хэшей и гидрации в кашу */}
+      <style>{`
         .softCurtain{
           position: fixed;
           inset: 0;
@@ -332,6 +376,26 @@ export default function Home() {
             #06110D;
         }
         .softCurtain.is-on{ opacity:1; pointer-events:auto }
+
+        .gifOverlay{
+          position: fixed;
+          inset: 0;
+          z-index: 90;
+          pointer-events: none;
+        }
+        .gifSticker{
+          position: absolute;
+          transform: translate(-50%, -50%);
+        }
+        .gifImg{
+          display: block;
+          width: 100%;
+          height: auto;
+          image-rendering: auto;
+          filter:
+            drop-shadow(0 8px 20px rgba(0,0,0,.45))
+            drop-shadow(0 0 14px rgba(160,245,230,.18));
+        }
       `}</style>
     </main>
   )
