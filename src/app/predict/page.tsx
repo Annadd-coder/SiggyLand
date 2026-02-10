@@ -1,9 +1,9 @@
-// src/app/ask/page.tsx
+// src/app/predict/page.tsx
 'use client'
 
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
-import styles from './ask.module.css'
+import styles from './predict.module.css'
 
 type Role = 'user' | 'assistant'
 type Mode = 'ritual' | 'predict'
