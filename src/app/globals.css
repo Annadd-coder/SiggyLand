@@ -407,6 +407,55 @@ body.header-hide .siteHeader{
 @media (prefers-contrast: more){ .navPill.navPill--ice{ border-width:2px } }
 @media (prefers-reduced-motion: reduce){ .navPill.navPill--ice, .siteHeader{ transition:none !important } }
 
+/* === Header/Nav — Mobile layout === */
+@media (max-width: 900px){
+  :root{ --headerH: 104px; }
+  .wide{ padding: 0 16px }
+  .hdrRow{
+    height: var(--headerH);
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 8px;
+    padding: 6px 0;
+  }
+  .hdrRow.left{ gap: 8px }
+  .brandWrap svg,
+  .brandWrap img{ height: 48px; width: auto; }
+  .navBar{ width: 100%; margin-left: 0; }
+  .navList{
+    width: 100%;
+    gap: 8px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .navList::-webkit-scrollbar{ display:none }
+  .navPill{
+    min-width: 0;
+    padding: 8px 10px;
+    border-width: 3px;
+    border-radius: 18px;
+  }
+  .navPill.navPill--ice{
+    min-width: 0;
+    padding: 8px 10px;
+    border-radius: 18px;
+  }
+  .navLabel{ font-size: 15px; letter-spacing: .4px }
+  .navPaw{ width: 24px; height: 24px }
+}
+@media (max-width: 560px){
+  :root{ --headerH: 96px; }
+  .wide{ padding: 0 12px }
+  .brandWrap svg,
+  .brandWrap img{ height: 44px; }
+  .navLabel{ font-size: 14px; }
+  .navPaw{ display: none; }
+}
+
 /* WHAT page — winter night sky */
 .skinWhat::before{
   background:
@@ -523,6 +572,10 @@ body.header-hide .siteHeader{
 @media (min-width: 1440px){ .whatPage { --gutter: 72px } }
 @media (max-width: 640px){ .whatPage { --gutter: 18px } .whatPage .sliceInner{ padding: 40px var(--gutter) } }
 @media (max-width: 900px){
+  .whatPage .sliceInner{ padding: 48px var(--gutter) }
+  .whatPage .sliceGrid{ grid-template-columns: 1fr; gap: 28px; }
+  .whatPage .sliceTextCol{ order: 1 }
+  .whatPage .sliceArtCol{ order: 2 }
   .whatPage .sliceArtCol::before{ width:min(70vw, 520px); height:min(70vw, 520px); top:58% }
   .whatPage .sliceArtImg{ width:min(72vw, 540px) }
 }

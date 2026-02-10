@@ -393,6 +393,17 @@ export default function StoryWhitelistPage() {
           .wl__art{ order:-1 }
           .lead{ max-width: 52ch }
         }
+        @media (max-width: 640px){
+          .wlPage{ height: auto; min-height: calc(100svh - var(--headerH)); overflow: auto; }
+          .wl{ width: min(94vw, 560px); padding-block: 20px; }
+          .row{ flex-direction: column; align-items: stretch; }
+          .submit{ width: 100%; }
+          .scene{
+            width: min(78vw, 420px);
+            max-width: 78vw;
+          }
+          .frame__cap{ font-size: 11px; }
+        }
       `}</style>
     </main>
   )
