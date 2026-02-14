@@ -16,21 +16,16 @@ export default function AudioToggle({
   topOffset = 'calc(var(--headerH) + 12px)',
 }: Props) {
   const audioRef = useRef<HTMLAudioElement>(null)
-  const [on, setOn] = useState(false)
+  const [on, setOn] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('siggy:audio:on') === '1'
+    } catch {
+      return false
+    }
+  })
   const [isFs, setIsFs] = useState(false)
 
-  // ✅ mount gate, но без раннего return ДО хуков
-  const [mounted, setMounted] = useState(false)
   useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem('siggy:audio:on')
-      if (saved === '1') setOn(true)
-    } catch {}
-
     const onFs = () => setIsFs(!!document.fullscreenElement)
     document.addEventListener('fullscreenchange', onFs)
     return () => document.removeEventListener('fullscreenchange', onFs)
@@ -58,9 +53,6 @@ export default function AudioToggle({
       else await document.exitFullscreen()
     } catch {}
   }
-
-  // ✅ теперь ранний return можно, потому что ВСЕ хуки уже вызваны
-  if (!mounted) return null
 
   return (
     <>

@@ -4,6 +4,12 @@ import { NextRequest, NextResponse } from 'next/server'
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
+function toErrorMessage(error: unknown, fallback = 'Server error') {
+  if (error instanceof Error && error.message) return error.message
+  if (typeof error === 'string' && error.trim()) return error
+  return fallback
+}
+
 type RawMarket = {
   id?: string | number
   question?: string
@@ -185,9 +191,9 @@ export async function GET(req: NextRequest) {
       markets: collected.slice(0, limit),
       meta: { scannedPages: Math.ceil(scanned / pageSize), scannedItems: scanned },
     })
-  } catch (e: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { ok: false, error: e?.message || 'Server error' },
+      { ok: false, error: toErrorMessage(error) },
       { status: 500 }
     )
   }

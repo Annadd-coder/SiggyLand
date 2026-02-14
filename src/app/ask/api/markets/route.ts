@@ -11,7 +11,22 @@ const ABI = [
   'function priceYes(uint256) view returns (uint256)',
 ]
 
-function toNum(x: any) {
+type MarketItem = {
+  id: string
+  question: string
+  endTime: number
+  endDate: string
+  b: number
+  qYes: number
+  qNo: number
+  volume: number
+  resolved: boolean
+  outcomeYes: boolean
+  yesPrice: number
+  active: boolean
+}
+
+function toNum(x: unknown) {
   const n = Number(x)
   return Number.isFinite(n) ? n : 0
 }
@@ -41,7 +56,7 @@ export async function GET(req: NextRequest) {
     const countRaw = await contract.marketCount()
     const count = Number(countRaw.toString())
 
-    const items: Array<any> = []
+    const items: MarketItem[] = []
 
     for (let i = count - 1; i >= 0; i--) {
       const [question, endTime, b, qYes, qNo, volumeUsdc, resolved, outcomeYes] = await contract.getMarket(i)
@@ -83,9 +98,10 @@ export async function GET(req: NextRequest) {
     const pageItems = items.slice(start, start + pageSize)
 
     return NextResponse.json({ ok: true, markets: pageItems, total, pageCount })
-  } catch (e: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Server error'
     return NextResponse.json(
-      { ok: false, error: e?.message || 'Server error' },
+      { ok: false, error: message },
       { status: 500 }
     )
   }

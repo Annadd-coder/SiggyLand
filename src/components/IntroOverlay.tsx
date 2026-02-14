@@ -2,6 +2,7 @@
 'use client'
 
 import React from 'react'
+import { useHydrated } from '@/lib/useHydrated'
 
 const LS_KEY = 'siggy:intro:v9:dismissed'
 
@@ -81,8 +82,11 @@ function headerH(): number {
 }
 
 export default function IntroOverlay() {
-  const [show, setShow] = React.useState<boolean>(false)
-  React.useEffect(() => { setShow(initShow()) }, [])
+  const hydrated = useHydrated()
+  const [show, setShow] = React.useState<boolean>(() => {
+    if (typeof window === 'undefined') return false
+    return initShow()
+  })
   const [dims, setDims] = React.useState({
     w: typeof window !== 'undefined' ? window.innerWidth : 0,
     h: typeof window !== 'undefined' ? window.innerHeight : 0,
@@ -95,6 +99,17 @@ export default function IntroOverlay() {
   }>({ origin: null, toWhat: null, toEco: null, toRes: null })
 
   const titleRef = React.useRef<HTMLDivElement>(null)
+  const dismiss = React.useCallback(() => {
+    setShow(false)
+    try { localStorage.setItem(LS_KEY, '1') } catch {}
+    try {
+      const url = new URL(window.location.href)
+      if (url.searchParams.has('intro')) {
+        url.searchParams.delete('intro')
+        history.replaceState(null, '', url.toString())
+      }
+    } catch {}
+  }, [])
 
   const recalc = React.useCallback(() => {
     const measure = () => {
@@ -148,21 +163,9 @@ export default function IntroOverlay() {
       window.removeEventListener('load', recalc)
       window.removeEventListener('keydown', onKey)
     }
-  }, [show, recalc])
+  }, [show, recalc, dismiss])
 
-  const dismiss = () => {
-    setShow(false)
-    try { localStorage.setItem(LS_KEY, '1') } catch {}
-    try {
-      const url = new URL(window.location.href)
-      if (url.searchParams.has('intro')) {
-        url.searchParams.delete('intro')
-        history.replaceState(null, '', url.toString())
-      }
-    } catch {}
-  }
-
-  if (!show) return null
+  if (!hydrated || !show) return null
 
   const { origin, toWhat, toEco, toRes } = pts
   const hasSVG = !!origin && (!!toWhat || !!toEco || !!toRes)

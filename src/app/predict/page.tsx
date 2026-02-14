@@ -8,6 +8,7 @@ import styles from './predict.module.css'
 type Role = 'user' | 'assistant'
 type Mode = 'ritual' | 'predict'
 type Msg = { id: string; role: Role; text: string; ts?: number }
+type MarketSort = 'volume' | 'liquidity' | 'end'
 
 type Market = {
   id: string
@@ -23,6 +24,25 @@ type Market = {
 const CHAT_KEY = 'siggy:chat:v0'
 const MODE_KEY = 'siggy:ask:mode:v1'
 const MEMORY_MAX = 14
+const MARKET_SORTS: readonly MarketSort[] = ['volume', 'liquidity', 'end']
+
+function isMarketSort(value: string): value is MarketSort {
+  return MARKET_SORTS.includes(value as MarketSort)
+}
+
+function parseJson<T>(raw: string): T | null {
+  try {
+    return JSON.parse(raw) as T
+  } catch {
+    return null
+  }
+}
+
+function toErrorMessage(error: unknown, fallback: string) {
+  if (error instanceof Error && error.message) return error.message
+  if (typeof error === 'string' && error.trim()) return error
+  return fallback
+}
 
 function makeGreeting(): Msg {
   return {
@@ -51,7 +71,7 @@ export default function AskPage() {
   const [mLoading, setMLoading] = useState(false)
   const [mErr, setMErr] = useState<string | null>(null)
   const [mQuery, setMQuery] = useState('')
-  const [mSort, setMSort] = useState<'volume' | 'liquidity' | 'end'>('volume')
+  const [mSort, setMSort] = useState<MarketSort>('volume')
   const [mActiveOnly, setMActiveOnly] = useState(true)
   const [selectedMarket, setSelectedMarket] = useState<Market | null>(null)
 
@@ -106,8 +126,7 @@ export default function AskPage() {
 
         const res = await fetch(`/predict/api/markets?${qs.toString()}`)
         const rawText = await res.text()
-        let data: any = null
-        try { data = JSON.parse(rawText) } catch {}
+        const data = parseJson<{ ok?: boolean; error?: string; markets?: Market[] }>(rawText)
 
         if (!res.ok || !data?.ok) {
           const hint = data?.error || rawText?.slice(0, 180) || 'Markets request failed'
@@ -116,9 +135,9 @@ export default function AskPage() {
 
         if (!alive) return
         setMarkets(Array.isArray(data.markets) ? data.markets : [])
-      } catch (e: any) {
+      } catch (error: unknown) {
         if (!alive) return
-        setMErr(e?.message || 'Failed to load markets')
+        setMErr(toErrorMessage(error, 'Failed to load markets'))
         setMarkets([])
       } finally {
         if (!alive) return
@@ -161,8 +180,7 @@ export default function AskPage() {
       })
 
       const rawText = await res.text()
-      let data: any = null
-      try { data = JSON.parse(rawText) } catch {}
+      const data = parseJson<{ ok?: boolean; error?: string; reply?: string }>(rawText)
 
       if (!res.ok || !data?.ok) {
         const hint = data?.error || rawText?.slice(0, 180) || 'Request failed'
@@ -177,8 +195,8 @@ export default function AskPage() {
       }
 
       setChat(prev => [...prev, botMsg])
-    } catch (e: any) {
-      setErr(e?.message || 'Network error')
+    } catch (error: unknown) {
+      setErr(toErrorMessage(error, 'Network error'))
     } finally {
       setLoading(false)
     }
@@ -337,7 +355,10 @@ export default function AskPage() {
                   <select
                     className="marketSelect"
                     value={mSort}
-                    onChange={(e) => setMSort(e.target.value as any)}
+                    onChange={(e) => {
+                      const next = e.target.value
+                      if (isMarketSort(next)) setMSort(next)
+                    }}
                     aria-label="Sort"
                   >
                     <option value="volume">Sort: volume</option>

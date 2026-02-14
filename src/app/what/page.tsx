@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 
 export default function WhatPage() {
   return (
@@ -30,10 +31,12 @@ export default function WhatPage() {
 
             {/* арт сбоку, не фон */}
             <div className="sliceArtCol">
-              <img
+              <Image
                 className="sliceArtImg"
                 src="/siggyland/what-hub-art.png"
                 alt="Siggy hub — cats as shortcuts"
+                width={500}
+                height={500}
               />
             </div>
           </div>
@@ -45,10 +48,12 @@ export default function WhatPage() {
         <div className="sliceInner max">
           <div className="sliceGrid">
             <div className="sliceArtCol">
-              <img
+              <Image
                 className="sliceArtImg"
                 src="/siggyland/what-ask-art.png"
                 alt="Ask Siggy — assistant concept"
+                width={500}
+                height={500}
               />
             </div>
 
@@ -105,10 +110,12 @@ export default function WhatPage() {
             </div>
 
             <div className="sliceArtCol">
-              <img
+              <Image
                 className="sliceArtImg"
                 src="/siggyland/what-chronicle-art.png"
                 alt="Siggy Chronicle — monthly NFT"
+                width={500}
+                height={500}
               />
             </div>
           </div>

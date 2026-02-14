@@ -2,15 +2,19 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import React from 'react'
 
 const FORMSPREE_ENDPOINT = 'https://formspree.io/f/xzzypynl'
 const LS_KEY = 'siggy:story:wl:emails'
+type FormErrorPayload = { error?: string }
+type StoryArtVars = React.CSSProperties & Record<'--story-art-w' | '--story-art-x' | '--story-art-y', string>
 
 export default function StoryWhitelistPage() {
   const [email, setEmail] = React.useState('')
   const [status, setStatus] = React.useState<'idle' | 'loading' | 'ok' | 'dup' | 'err'>('idle')
   const [message, setMessage] = React.useState('')
+  const [frameSrc, setFrameSrc] = React.useState('/siggyland/cats/letter-cat.webp')
 
   // локальная проверка на дубль
   const checkDuplicate = (e: string) => {
@@ -60,7 +64,7 @@ export default function StoryWhitelistPage() {
         addLocal(v)
         setStatus('ok')
       } else {
-        const data = await res.json().catch(() => ({} as any))
+        const data = (await res.json().catch(() => null)) as FormErrorPayload | null
         setStatus('err')
         setMessage(data?.error || 'Something went wrong. Please try again.')
       }
@@ -70,10 +74,8 @@ export default function StoryWhitelistPage() {
     }
   }
 
-  // fallback на PNG
-  const onImgError = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    const el = e.currentTarget
-    if (el.src.endsWith('.webp')) el.src = el.src.replace(/\.webp$/, '.png')
+  const onFrameError = () => {
+    setFrameSrc((prev) => (prev.endsWith('.webp') ? prev.replace(/\.webp$/, '.png') : prev))
   }
 
   return (
@@ -141,22 +143,23 @@ export default function StoryWhitelistPage() {
           className="wl__art"
           style={
             {
-              ['--story-art-w' as any]: 'min(42vw, 560px)',
-              ['--story-art-x' as any]: '0px',
-              ['--story-art-y' as any]: '0px',
-            } as React.CSSProperties
+              '--story-art-w': 'min(42vw, 560px)',
+              '--story-art-x': '0px',
+              '--story-art-y': '0px',
+            } as StoryArtVars
           }
         >
           <div className="scene" aria-hidden={false}>
             <div className="scene__glow" />
             <figure className="frame">
-              <img
-                src="/siggyland/cats/letter-cat.webp"
+              <Image
+                src={frameSrc}
                 alt="Siggy writing letters"
                 className="frame__img"
-                onError={onImgError}
-                loading="eager"
-                decoding="async"
+                onError={onFrameError}
+                width={500}
+                height={500}
+                priority
               />
               <div className="frame__glass" aria-hidden />
               <figcaption className="frame__cap"></figcaption>

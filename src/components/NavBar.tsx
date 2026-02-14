@@ -2,10 +2,11 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import Paw from './icons/Paw'
 
 type Item = { href: string; label: string; intro?: 'what'|'ask'|'story' }
+type SnowFlakeVars = CSSProperties & Record<'--d' | '--delay' | '--sway', string>
 
 const items: Item[] = [
   { href: '/what',  label: 'WHAT IS',   intro: 'what'  },
@@ -75,18 +76,26 @@ export default function NavBar() {
     <nav className="navBar navBar--frost" aria-label="Primary" data-visible={visible ? '1' : '0'}>
       {/* тонкий снежок над шапкой */}
       <div className="hdrSnow" aria-hidden>
-        {Array.from({ length: 34 }).map((_, i) => (
-          <span
-            key={i}
-            className="flake"
-            style={{
-              left: `${(i * 29) % 100}%`,
-              width: `${2 + (i % 3)}px`,
-              height: `${2 + (i % 3)}px`,
-              ...( { ['--d' as any]: `${4 + (i % 7) * .6}s`, ['--delay' as any]: `${(i%10)*.18}s`, ['--sway' as any]: `${8 + (i%5)*5}px` } )
-            }}
-          />
-        ))}
+        {Array.from({ length: 34 }).map((_, i) => {
+          const vars: SnowFlakeVars = {
+            '--d': `${4 + (i % 7) * 0.6}s`,
+            '--delay': `${(i % 10) * 0.18}s`,
+            '--sway': `${8 + (i % 5) * 5}px`,
+          }
+
+          return (
+            <span
+              key={i}
+              className="flake"
+              style={{
+                left: `${(i * 29) % 100}%`,
+                width: `${2 + (i % 3)}px`,
+                height: `${2 + (i % 3)}px`,
+                ...vars,
+              }}
+            />
+          )
+        })}
       </div>
 
       <ul className="navList">

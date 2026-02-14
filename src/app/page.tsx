@@ -21,12 +21,12 @@ export default function Home() {
     // запрет скролла на главной
     const html = document.documentElement
     const body = document.body
-    const style = body.style as any
+    const style = body.style
 
     const prevHtmlOverflow = html.style.overflow
     const prevBodyOverflow = body.style.overflow
-    const prevOSB = style.overscrollBehavior as string | undefined
-    const prevTouch = style.touchAction as string | undefined
+    const prevOSB = style.overscrollBehavior
+    const prevTouch = style.touchAction
 
     html.style.overflow = 'hidden'
     body.style.overflow = 'hidden'

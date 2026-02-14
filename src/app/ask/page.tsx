@@ -8,6 +8,18 @@ import styles from './ask.module.css'
 type Role = 'user' | 'assistant'
 type Msg = { id: string; role: Role; text: string; ts?: number }
 type Mode = 'ritual' | 'predict'
+type MarketSort = 'volume' | 'liquidity' | 'end'
+type TradeSide = 'BUY' | 'SELL'
+type TradeOutcome = 'YES' | 'NO'
+type QuickAction = {
+  label: string
+  prompt?: string
+  onClick?: () => void
+  disabledIfNoSelected?: boolean
+}
+type EthereumProvider = ethers.providers.ExternalProvider & {
+  request: (args: { method: string; params?: unknown[] | Record<string, unknown> }) => Promise<unknown>
+}
 
 type Market = {
   id: string
@@ -26,13 +38,16 @@ const CHAT_KEY_PREDICT = 'siggy:chat:predict:v1'
 const CHAT_KEY_RITUAL = 'siggy:chat:ritual:v1'
 const MODE_KEY = 'siggy:ask:mode:v2'
 const MEMORY_MAX = 14
+const MARKET_SORTS: readonly MarketSort[] = ['volume', 'liquidity', 'end']
+const TRADE_OUTCOMES: readonly TradeOutcome[] = ['YES', 'NO']
+const TRADE_SIDES: readonly TradeSide[] = ['BUY', 'SELL']
 
 const BASE_CHAIN_ID = 8453
 const USDC_ADDRESS_BASE = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913'
 const MARKET_ADDRESS = process.env.NEXT_PUBLIC_PREDICT_MARKET_ADDRESS || ''
 const B_DEFAULT = '500' // auto liquidity (b), user doesn't set it
 
-  const MARKET_ABI = [
+const MARKET_ABI = [
   'function createMarket(string question,uint40 endTime,uint256 b,uint256 seedUsdc) returns (uint256)',
   'function buyYes(uint256 id,uint256 shares,uint256 maxCostUsdc)',
   'function buyNo(uint256 id,uint256 shares,uint256 maxCostUsdc)',
@@ -103,6 +118,45 @@ function fmtCountdown(iso: string) {
   return `${d}d ${String(h).padStart(2, '0')}h ${String(m).padStart(2, '0')}m ${String(s).padStart(2, '0')}s`
 }
 
+function isMarketSort(value: string): value is MarketSort {
+  return MARKET_SORTS.includes(value as MarketSort)
+}
+
+function isTradeOutcome(value: string): value is TradeOutcome {
+  return TRADE_OUTCOMES.includes(value as TradeOutcome)
+}
+
+function isTradeSide(value: string): value is TradeSide {
+  return TRADE_SIDES.includes(value as TradeSide)
+}
+
+function parseJson<T>(raw: string): T | null {
+  try {
+    return JSON.parse(raw) as T
+  } catch {
+    return null
+  }
+}
+
+function toErrorMessage(error: unknown, fallback: string) {
+  if (error instanceof Error && error.message) return error.message
+  if (typeof error === 'string' && error.trim()) return error
+  return fallback
+}
+
+function isAbortError(error: unknown) {
+  return error instanceof DOMException && error.name === 'AbortError'
+}
+
+function getEthereumProvider(): EthereumProvider | null {
+  if (typeof window === 'undefined') return null
+  const ethereum = (window as Window & { ethereum?: unknown }).ethereum
+  if (!ethereum || typeof ethereum !== 'object') return null
+  const request = (ethereum as { request?: unknown }).request
+  if (typeof request !== 'function') return null
+  return ethereum as EthereumProvider
+}
+
 export default function AskPage() {
   const inputId = useId()
 
@@ -115,7 +169,7 @@ export default function AskPage() {
 
   // markets
   const [qMarkets, setQMarkets] = useState('')
-  const [sort, setSort] = useState<'volume' | 'liquidity' | 'end'>('volume')
+  const [sort, setSort] = useState<MarketSort>('volume')
   const [activeOnly, setActiveOnly] = useState(true)
   const [page, setPage] = useState(1)
   const pageSize = 8
@@ -140,8 +194,8 @@ export default function AskPage() {
 
   // trade
   const [tradeOpen, setTradeOpen] = useState(false)
-  const [tradeSide, setTradeSide] = useState<'BUY' | 'SELL'>('BUY')
-  const [tradeOutcome, setTradeOutcome] = useState<'YES' | 'NO'>('YES')
+  const [tradeSide, setTradeSide] = useState<TradeSide>('BUY')
+  const [tradeOutcome, setTradeOutcome] = useState<TradeOutcome>('YES')
   const [tradeShares, setTradeShares] = useState('10')
   const [tradeLimit, setTradeLimit] = useState('')
   const [tradeBusy, setTradeBusy] = useState(false)
@@ -228,10 +282,11 @@ export default function AskPage() {
       try {
         if (!MARKET_ADDRESS) return
         const rpc = process.env.NEXT_PUBLIC_BASE_RPC_URL
+        const ethereum = getEthereumProvider()
         const provider = rpc
           ? new ethers.providers.JsonRpcProvider(rpc)
-          : (window as any).ethereum
-            ? new ethers.providers.Web3Provider((window as any).ethereum)
+          : ethereum
+            ? new ethers.providers.Web3Provider(ethereum)
             : null
         if (!provider) return
         const contract = new ethers.Contract(MARKET_ADDRESS, MARKET_ABI, provider)
@@ -270,7 +325,13 @@ export default function AskPage() {
           signal: controller.signal,
         })
 
-        const data = await res.json().catch(() => null)
+        const data = (await res.json().catch(() => null)) as {
+          ok?: boolean
+          error?: string
+          markets?: Market[]
+          total?: number
+          pageCount?: number
+        } | null
 
         if (!res.ok || !data?.ok) {
           const msg = data?.error || `Markets request failed (${res.status})`
@@ -280,12 +341,12 @@ export default function AskPage() {
         setMarkets(Array.isArray(data.markets) ? data.markets : [])
         setTotal(Number(data.total || 0))
         setPageCount(Math.max(1, Number(data.pageCount || 1)))
-      } catch (e: any) {
-        if (e?.name === 'AbortError') return
+      } catch (error: unknown) {
+        if (isAbortError(error)) return
         setMarkets([])
         setTotal(0)
         setPageCount(1)
-        setErrMk(e?.message || 'Failed to load markets')
+        setErrMk(toErrorMessage(error, 'Failed to load markets'))
       } finally {
         setLoadingMk(false)
       }
@@ -347,8 +408,7 @@ export default function AskPage() {
       })
 
       const rawText = await res.text()
-      let data: any = null
-      try { data = JSON.parse(rawText) } catch {}
+      const data = parseJson<{ ok?: boolean; error?: string; reply?: string }>(rawText)
 
       if (!res.ok || !data?.ok) {
         const hint = data?.error || rawText?.slice(0, 180) || 'Request failed'
@@ -363,8 +423,8 @@ export default function AskPage() {
       }
 
       setChat(prev => [...prev, botMsg])
-    } catch (e: any) {
-      setErrChat(e?.message || 'Network error')
+    } catch (error: unknown) {
+      setErrChat(toErrorMessage(error, 'Network error'))
     } finally {
       setLoadingChat(false)
     }
@@ -437,7 +497,7 @@ export default function AskPage() {
   }
 
   async function connectWallet() {
-    const eth = (window as any).ethereum
+    const eth = getEthereumProvider()
     if (!eth) {
       throw new Error('Install a wallet (MetaMask) to continue.')
     }
@@ -456,13 +516,13 @@ export default function AskPage() {
   }
 
   async function ensureBase() {
-    const eth = (window as any).ethereum
+    const eth = getEthereumProvider()
     if (!eth) return false
     try {
       await eth.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x2105' }] })
       return true
-    } catch (e: any) {
-      throw new Error(e?.message || 'Please switch to Base (chainId 8453).')
+    } catch (error: unknown) {
+      throw new Error(toErrorMessage(error, 'Please switch to Base (chainId 8453).'))
     }
   }
 
@@ -515,8 +575,8 @@ export default function AskPage() {
       setCreateOk('Market created')
       setNewQuestion('')
       setMkNonce(n => n + 1)
-    } catch (e: any) {
-      setCreateErr(e?.message || 'Create failed')
+    } catch (error: unknown) {
+      setCreateErr(toErrorMessage(error, 'Create failed'))
     } finally {
       setCreateBusy(false)
     }
@@ -554,8 +614,8 @@ export default function AskPage() {
 
       setTradeOk('Trade sent')
       setMkNonce(n => n + 1)
-    } catch (e: any) {
-      setTradeErr(e?.message || 'Trade failed')
+    } catch (error: unknown) {
+      setTradeErr(toErrorMessage(error, 'Trade failed'))
     } finally {
       setTradeBusy(false)
     }
@@ -576,8 +636,8 @@ export default function AskPage() {
 
       setTradeOk('Redeemed')
       setMkNonce(n => n + 1)
-    } catch (e: any) {
-      setTradeErr(e?.message || 'Redeem failed')
+    } catch (error: unknown) {
+      setTradeErr(toErrorMessage(error, 'Redeem failed'))
     } finally {
       setTradeBusy(false)
     }
@@ -598,26 +658,26 @@ export default function AskPage() {
 
       setTradeOk('Resolved')
       setMkNonce(n => n + 1)
-    } catch (e: any) {
-      setTradeErr(e?.message || 'Resolution failed')
+    } catch (error: unknown) {
+      setTradeErr(toErrorMessage(error, 'Resolution failed'))
     } finally {
       setTradeBusy(false)
     }
   }
 
-  const quickPredict = [
+  const quickPredict: QuickAction[] = [
     { label: 'Explain selected market', onClick: () => explainSelected(), disabledIfNoSelected: true },
     { label: 'Описание ставки', onClick: () => describeBetSelected(), disabledIfNoSelected: true },
     { label: 'How to read Yes %', prompt: 'How do I interpret the Yes price in prediction markets?' },
     { label: 'Risk checklist', prompt: 'Give me a practical risk checklist for prediction markets.' },
     { label: 'Explain price move', prompt: 'Why did this market price move? What are the most common reasons?' },
-  ] as const
+  ]
 
-  const quickRitual = [
+  const quickRitual: QuickAction[] = [
     { label: 'What is Ritual?', prompt: 'Explain Ritual in simple terms and how it differs from typical L1/L2.' },
     { label: 'Smart Agents', prompt: 'Explain Smart Agents on Ritual and what problems they solve.' },
     { label: 'Scheduled tx', prompt: 'How do Scheduled Transactions work, and what are safe patterns for them?' },
-  ] as const
+  ]
 
   const chatPlaceholder = mode === 'predict'
     ? 'Ask for an explanation, risks, or price move…'
@@ -719,7 +779,14 @@ export default function AskPage() {
                     <div className={styles.controlsRow}>
                       <div className={styles.selectWrap}>
                         <span className={styles.selectLabel}>Sort:</span>
-                        <select className={styles.select} value={sort} onChange={(e) => setSort(e.target.value as any)}>
+                        <select
+                          className={styles.select}
+                          value={sort}
+                          onChange={(e) => {
+                            const next = e.target.value
+                            if (isMarketSort(next)) setSort(next)
+                          }}
+                        >
                           <option value="volume">volume</option>
                           <option value="liquidity">liquidity</option>
                           <option value="end">end</option>
@@ -898,7 +965,10 @@ export default function AskPage() {
                               <select
                                 className={styles.tradeSelect}
                                 value={tradeOutcome}
-                                onChange={(e) => setTradeOutcome(e.target.value as any)}
+                                onChange={(e) => {
+                                  const next = e.target.value
+                                  if (isTradeOutcome(next)) setTradeOutcome(next)
+                                }}
                               >
                                 <option value="YES">YES</option>
                                 <option value="NO">NO</option>
@@ -910,7 +980,10 @@ export default function AskPage() {
                               <select
                                 className={styles.tradeSelect}
                                 value={tradeSide}
-                                onChange={(e) => setTradeSide(e.target.value as any)}
+                                onChange={(e) => {
+                                  const next = e.target.value
+                                  if (isTradeSide(next)) setTradeSide(next)
+                                }}
                               >
                                 <option value="BUY">BUY</option>
                                 <option value="SELL">SELL</option>
@@ -948,8 +1021,8 @@ export default function AskPage() {
                                 onClick={async () => {
                                   try {
                                     await connectWallet()
-                                  } catch (e: any) {
-                                    setTradeErr(e?.message || 'Wallet error')
+                                  } catch (error: unknown) {
+                                    setTradeErr(toErrorMessage(error, 'Wallet error'))
                                   }
                                 }}
                                 disabled={tradeBusy}
@@ -1128,7 +1201,7 @@ export default function AskPage() {
               )}
 
               <div className={styles.quickWrap}>
-                {(mode === 'predict' ? quickPredict : quickRitual).map((it: any) => {
+                {(mode === 'predict' ? quickPredict : quickRitual).map((it) => {
                   const disabled =
                     loadingChat ||
                     (it.disabledIfNoSelected ? !selected : false)

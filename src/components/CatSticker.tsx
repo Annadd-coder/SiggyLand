@@ -1,6 +1,7 @@
 // src/components/CatSticker.tsx
 'use client'
 import React, { useId } from 'react'
+import Image from 'next/image'
 
 type BaseProps = {
   src: string
@@ -59,7 +60,15 @@ export default function CatSticker({
         ...(style || {}),
       }}
     >
-      <img src={src} alt={alt} draggable={false} />
+      <Image
+        src={src}
+        alt={alt}
+        width={500}
+        height={500}
+        draggable={false}
+        className="catStickerImg"
+        sizes="(max-width: 900px) 28vw, 12vw"
+      />
 
       {hint && (
         <span

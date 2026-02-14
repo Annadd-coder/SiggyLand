@@ -50,6 +50,18 @@ function jsonError(message: string, status = 500) {
 
 type HistoryItem = { role: "user" | "assistant"; text: string };
 
+function isHistoryItem(value: unknown): value is HistoryItem {
+  if (!value || typeof value !== "object") return false;
+  const item = value as { role?: unknown; text?: unknown };
+  return (item.role === "user" || item.role === "assistant") && typeof item.text === "string";
+}
+
+function toErrorMessage(error: unknown, fallback = "Server error") {
+  if (error instanceof Error && error.message) return error.message;
+  if (typeof error === "string" && error.trim()) return error;
+  return fallback;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => null);
@@ -61,10 +73,10 @@ export async function POST(req: NextRequest) {
     if (!apiKey) return jsonError("Missing OPENAI_API_KEY", 500);
 
     // history приходит с клиента: [{role, text}, ...]
-    const rawHistory = Array.isArray(body?.history) ? body.history : [];
+    const rawHistory: unknown[] = Array.isArray(body?.history) ? body.history : [];
     const history: HistoryItem[] = rawHistory
-      .filter((m: any) => m && (m.role === "user" || m.role === "assistant"))
-      .map((m: any) => ({ role: m.role, text: String(m.text ?? "").trim() }))
+      .filter(isHistoryItem)
+      .map((m) => ({ role: m.role, text: m.text.trim() }))
       .filter((m: HistoryItem) => m.text.length > 0)
       .slice(-18); // серверный кап, на всякий
 
@@ -72,7 +84,7 @@ export async function POST(req: NextRequest) {
 
     const input = [
       { role: "system" as const, content: SYSTEM_PROMPT },
-      ...history.map((m) => ({ role: m.role as any, content: m.text })),
+      ...history.map((m) => ({ role: m.role, content: m.text })),
       // на всякий случай гарантируем, что последнее сообщение - текущее
       { role: "user" as const, content: userText },
     ];
@@ -85,8 +97,8 @@ export async function POST(req: NextRequest) {
 
     const reply = (response.output_text ?? "").trim() || "I got nothing. Try again.";
     return NextResponse.json({ ok: true, reply });
-  } catch (e: any) {
-    const msg = e?.message || (typeof e === "string" ? e : "Server error");
+  } catch (error: unknown) {
+    const msg = toErrorMessage(error);
     return jsonError(msg, 500);
   }
 }

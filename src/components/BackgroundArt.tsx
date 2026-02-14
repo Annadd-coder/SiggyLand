@@ -1,6 +1,10 @@
 // src/components/BackgroundArt.tsx
 'use client'
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useMemo, useRef } from 'react'
+import { useHydrated } from '@/lib/useHydrated'
+
+type BgArtVars = React.CSSProperties & Record<'--bgY' | '--bgYMobile', string>
+type SnowVars = React.CSSProperties & Record<'--dur' | '--delay' | '--swayDur' | '--swayDelay' | '--wind', string>
 
 type Props = {
   /** Десктопный фон (лежит в /public) */
@@ -43,9 +47,7 @@ export default function BackgroundArt({
 
   parallax = false,
 }: Props) {
-  // ✅ чтобы не было SSR/CSR mismatch — эффекты (снег) рисуем только после mount
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => setMounted(true), [])
+  const hydrated = useHydrated()
 
   // фолбэк для проблемных форматов
   const triedFallbackRef = useRef(false)
@@ -77,9 +79,9 @@ export default function BackgroundArt({
       style={
         {
           // ✅ управляем object-position через CSS переменные (и media-query)
-          ['--bgY' as any]: objectY,
-          ['--bgYMobile' as any]: yMobile,
-        } as React.CSSProperties
+          '--bgY': objectY,
+          '--bgYMobile': yMobile,
+        } as BgArtVars
       }
     >
       {/* фон */}
@@ -107,8 +109,8 @@ export default function BackgroundArt({
         </div>
       )}
 
-      {/* ❄ снег — только после mount */}
-      {mounted && snow && <SnowLayer count={snowCount} speedBase={snowSpeedBase} drift={snowDrift} />}
+      {/* ❄ снег — только после hydration */}
+      {hydrated && snow && <SnowLayer count={snowCount} speedBase={snowSpeedBase} drift={snowDrift} />}
 
       {/* хотспот по статуе */}
       <div className="bgArt__hotspots">
@@ -178,14 +180,13 @@ function SnowLayer({
     return x - Math.floor(x)
   }
 
-  // ✅ делаем строки через toFixed, чтобы даже при SSR всё совпадало 1:1
-  const f2 = (n: number) => n.toFixed(2)
-  const f4 = (n: number) => n.toFixed(4)
-  const px = (n: number) => `${f4(n)}px`
-  const pct = (n: number) => `${f4(n)}%`
-  const sec = (n: number) => `${f4(n)}s`
-
   const flakes = useMemo(() => {
+    // строки через toFixed, чтобы даже при SSR всё совпадало 1:1
+    const f4 = (n: number) => n.toFixed(4)
+    const px = (n: number) => `${f4(n)}px`
+    const pct = (n: number) => `${f4(n)}%`
+    const sec = (n: number) => `${f4(n)}s`
+
     return Array.from({ length: count }).map((_, i) => {
       const left = rnd(i * 1.13) * 100
       const size = 2 + rnd(i * 1.91) * 5
@@ -202,7 +203,7 @@ function SnowLayer({
         left: pct(left),
         top: pct(topStart),
         size: px(size),
-        opacity: f4(opacity),
+        opacity: Number(f4(opacity)),
         blur: px(blur),
         dur: sec(dur),
         delay: sec(delay),
@@ -225,14 +226,14 @@ function SnowLayer({
               top: f.top,
               width: f.size,
               height: f.size,
-              opacity: f.opacity as any,
+              opacity: f.opacity,
               filter: `blur(${f.blur})`,
-              ['--dur' as any]: f.dur,
-              ['--delay' as any]: f.delay,
-              ['--swayDur' as any]: f.swayDur,
-              ['--swayDelay' as any]: f.swayDelay,
-              ['--wind' as any]: f.wind,
-            } as React.CSSProperties
+              '--dur': f.dur,
+              '--delay': f.delay,
+              '--swayDur': f.swayDur,
+              '--swayDelay': f.swayDelay,
+              '--wind': f.wind,
+            } as SnowVars
           }
         />
       ))}

@@ -4,6 +4,12 @@ import { NextRequest, NextResponse } from 'next/server'
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
+function toErrorMessage(error: unknown, fallback = 'Server error') {
+  if (error instanceof Error && error.message) return error.message
+  if (typeof error === 'string' && error.trim()) return error
+  return fallback
+}
+
 type RawMarket = {
   id?: string | number
   question?: string | null
@@ -15,14 +21,14 @@ type RawMarket = {
   closed?: boolean | null
 
   // иногда прилетают как строки, иногда как массивы
-  outcomes?: any
-  outcomePrices?: any
-  clobTokenIds?: any
+  outcomes?: unknown
+  outcomePrices?: unknown
+  clobTokenIds?: unknown
   conditionId?: string | null
   orderPriceMinTickSize?: number | string | null
   orderMinSize?: number | string | null
   negRisk?: boolean | string | null
-  events?: any
+  events?: unknown
 
   // иногда альтернативные поля
   volumeNum?: number | string | null
@@ -41,7 +47,7 @@ function num(v: unknown) {
   return Number.isFinite(n) ? n : 0
 }
 
-function toArrayMaybeJson(v: any): any[] {
+function toArrayMaybeJson(v: unknown): unknown[] {
   if (Array.isArray(v)) return v
   if (typeof v === 'string') {
     // часто это JSON строка вида ["Yes","No"] или ["0.63","0.37"]
@@ -85,10 +91,10 @@ function normMarket(m: RawMarket) {
 
   const active = Boolean(m.active ?? (!m.closed))
   const closed = Boolean(m.closed)
+  const firstEvent = events[0] as { negRisk?: unknown } | undefined
   const negRisk =
     m.negRisk != null ? toBool(m.negRisk) :
-    Array.isArray(events) ? Boolean((events as any[])?.[0]?.negRisk) :
-    false
+    toBool(firstEvent?.negRisk)
 
   const tickSize = num(m.orderPriceMinTickSize)
   const minSize = num(m.orderMinSize)
@@ -196,9 +202,9 @@ export async function GET(req: NextRequest) {
 
     const markets = picked.slice(0, limit)
     return NextResponse.json({ ok: true, markets })
-  } catch (e: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { ok: false, error: e?.message || 'Server error' },
+      { ok: false, error: toErrorMessage(error) },
       { status: 500 }
     )
   }

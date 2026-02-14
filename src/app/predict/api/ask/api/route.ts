@@ -46,6 +46,12 @@ function jsonError(message: string, status = 500) {
   return NextResponse.json({ ok: false, error: message }, { status })
 }
 
+function toErrorMessage(error: unknown, fallback = "Server error") {
+  if (error instanceof Error && error.message) return error.message
+  if (typeof error === "string" && error.trim()) return error
+  return fallback
+}
+
 function pickSystemPrompt(mode: Mode) {
   if (mode === "predict") {
     return `
@@ -110,8 +116,8 @@ export async function POST(req: NextRequest) {
 
     const reply = (response.output_text ?? "").trim() || "Хмм. Я завис. Скажи это чуть проще, и я отвечу нормально."
     return NextResponse.json({ ok: true, reply })
-  } catch (e: any) {
-    const msg = e?.message || (typeof e === "string" ? e : "Server error")
+  } catch (error: unknown) {
+    const msg = toErrorMessage(error)
     return jsonError(msg, 500)
   }
 }
