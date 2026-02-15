@@ -12,6 +12,7 @@ const items: Item[] = [
   { href: '/what',  label: 'WHAT IS',   intro: 'what'  },
   { href: '/ask',   label: 'ASK SIGGY', intro: 'ask'   },
   { href: '/story', label: 'STORY',     intro: 'story' },
+  { href: '/profile', label: 'PROFILE' },
 ]
 
 export default function NavBar() {

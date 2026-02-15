@@ -4,6 +4,7 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { ethers } from 'ethers'
 import styles from './ask.module.css'
+import { trackInteraction } from '@/lib/trackInteraction'
 
 type Role = 'user' | 'assistant'
 type Msg = { id: string; role: Role; text: string; ts?: number }
@@ -37,10 +38,48 @@ type Market = {
 const CHAT_KEY_PREDICT = 'siggy:chat:predict:v1'
 const CHAT_KEY_RITUAL = 'siggy:chat:ritual:v1'
 const MODE_KEY = 'siggy:ask:mode:v2'
+const ASK_ACTIVITY_KEY = 'siggy:activity:ask:v1'
+const MAX_ACTIVITY_EVENTS = 400
 const MEMORY_MAX = 14
 const MARKET_SORTS: readonly MarketSort[] = ['volume', 'liquidity', 'end']
 const TRADE_OUTCOMES: readonly TradeOutcome[] = ['YES', 'NO']
 const TRADE_SIDES: readonly TradeSide[] = ['BUY', 'SELL']
+
+type AskActivityEvent =
+  | {
+      id: string
+      ts: number
+      kind: 'create'
+      question: string
+      endDate: string
+      seedUsdc: number
+    }
+  | {
+      id: string
+      ts: number
+      kind: 'trade'
+      marketId: string
+      question: string
+      side: TradeSide
+      outcome: TradeOutcome
+      shares: number
+      limitUsdc: number
+    }
+  | {
+      id: string
+      ts: number
+      kind: 'redeem'
+      marketId: string
+      question: string
+    }
+  | {
+      id: string
+      ts: number
+      kind: 'resolve'
+      marketId: string
+      question: string
+      outcome: TradeOutcome
+    }
 
 const BASE_CHAIN_ID = 8453
 const USDC_ADDRESS_BASE = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913'
@@ -157,6 +196,20 @@ function getEthereumProvider(): EthereumProvider | null {
   return ethereum as EthereumProvider
 }
 
+function makeActivityId() {
+  return `ev-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+}
+
+function appendAskActivity(event: AskActivityEvent) {
+  if (typeof window === 'undefined') return
+  try {
+    const raw = localStorage.getItem(ASK_ACTIVITY_KEY)
+    const parsed = raw ? parseJson<AskActivityEvent[]>(raw) : null
+    const next = Array.isArray(parsed) ? [...parsed, event] : [event]
+    localStorage.setItem(ASK_ACTIVITY_KEY, JSON.stringify(next.slice(-MAX_ACTIVITY_EVENTS)))
+  } catch {}
+}
+
 export default function AskPage() {
   const inputId = useId()
 
@@ -219,6 +272,11 @@ export default function AskPage() {
       const m = saved === 'ritual' || saved === 'predict' ? saved : 'predict'
       setMode(m)
     } catch {}
+  }, [])
+
+  useEffect(() => {
+    trackInteraction({ type: 'visit_ask', value: 1 })
+    trackInteraction({ type: 'site_visit', value: 1, metadata: { page: 'ask' } })
   }, [])
 
   useEffect(() => {
@@ -398,6 +456,8 @@ export default function AskPage() {
     setIsNearBottom(true)
     if (!promptRaw) setQChat('')
 
+    trackInteraction({ type: 'ask_prompt', value: 1, metadata: { mode } })
+
     const history = nextChat.slice(-MEMORY_MAX).map(m => ({ role: m.role, text: m.text }))
 
     try {
@@ -423,6 +483,7 @@ export default function AskPage() {
       }
 
       setChat(prev => [...prev, botMsg])
+      trackInteraction({ type: 'ask_reply', value: 1, metadata: { mode } })
     } catch (error: unknown) {
       setErrChat(toErrorMessage(error, 'Network error'))
     } finally {
@@ -557,7 +618,8 @@ export default function AskPage() {
       setCreateBusy(true)
 
       if (!MARKET_ADDRESS) throw new Error('Missing NEXT_PUBLIC_PREDICT_MARKET_ADDRESS')
-      if (!newQuestion.trim()) throw new Error('Question is required')
+      const question = newQuestion.trim()
+      if (!question) throw new Error('Question is required')
       if (!newEnd) throw new Error('End date is required')
 
       const endTs = Math.floor(new Date(newEnd).getTime() / 1000)
@@ -569,8 +631,23 @@ export default function AskPage() {
       await ensureAllowance(signer, seed)
 
       const contract = new ethers.Contract(MARKET_ADDRESS, MARKET_ABI, signer)
-      const tx = await contract.createMarket(newQuestion.trim(), endTs, b, seed)
+      const tx = await contract.createMarket(question, endTs, b, seed)
       await tx.wait()
+
+      const seedUsdc = Number(newSeed || '0')
+      appendAskActivity({
+        id: makeActivityId(),
+        ts: Date.now(),
+        kind: 'create',
+        question,
+        endDate: newEnd,
+        seedUsdc: Number.isFinite(seedUsdc) ? seedUsdc : 0,
+      })
+      trackInteraction({
+        type: 'market_create',
+        value: 1,
+        metadata: { question, seedUsdc: Number.isFinite(seedUsdc) ? seedUsdc : 0 },
+      })
 
       setCreateOk('Market created')
       setNewQuestion('')
@@ -612,6 +689,32 @@ export default function AskPage() {
         await tx.wait()
       }
 
+      const sharesNum = Number(tradeShares || '0')
+      const limitNum = Number(tradeLimit || '0')
+      appendAskActivity({
+        id: makeActivityId(),
+        ts: Date.now(),
+        kind: 'trade',
+        marketId: selected.id,
+        question: selected.question,
+        side: tradeSide,
+        outcome: tradeOutcome,
+        shares: Number.isFinite(sharesNum) ? sharesNum : 0,
+        limitUsdc: Number.isFinite(limitNum) ? limitNum : 0,
+      })
+      trackInteraction({
+        type: 'market_trade',
+        value: 1,
+        metadata: {
+          marketId: selected.id,
+          question: selected.question,
+          side: tradeSide,
+          outcome: tradeOutcome,
+          shares: Number.isFinite(sharesNum) ? sharesNum : 0,
+          notional: Number.isFinite(limitNum) ? limitNum : 0,
+        },
+      })
+
       setTradeOk('Trade sent')
       setMkNonce(n => n + 1)
     } catch (error: unknown) {
@@ -634,6 +737,19 @@ export default function AskPage() {
       const tx = await contract.redeem(selected.id)
       await tx.wait()
 
+      appendAskActivity({
+        id: makeActivityId(),
+        ts: Date.now(),
+        kind: 'redeem',
+        marketId: selected.id,
+        question: selected.question,
+      })
+      trackInteraction({
+        type: 'market_redeem',
+        value: 1,
+        metadata: { marketId: selected.id, question: selected.question },
+      })
+
       setTradeOk('Redeemed')
       setMkNonce(n => n + 1)
     } catch (error: unknown) {
@@ -655,6 +771,24 @@ export default function AskPage() {
       const contract = new ethers.Contract(MARKET_ADDRESS, MARKET_ABI, signer)
       const tx = await contract.resolveMarket(selected.id, tradeOutcome === 'YES')
       await tx.wait()
+
+      appendAskActivity({
+        id: makeActivityId(),
+        ts: Date.now(),
+        kind: 'resolve',
+        marketId: selected.id,
+        question: selected.question,
+        outcome: tradeOutcome,
+      })
+      trackInteraction({
+        type: 'market_resolve',
+        value: 1,
+        metadata: {
+          marketId: selected.id,
+          question: selected.question,
+          outcome: tradeOutcome,
+        },
+      })
 
       setTradeOk('Resolved')
       setMkNonce(n => n + 1)
@@ -741,6 +875,7 @@ export default function AskPage() {
             </button>
 
             <Link href="/" data-softnav="1" className={styles.pillLink}>← Home</Link>
+            <Link href="/profile" data-softnav="1" className={styles.pillLink}>Profile</Link>
 
             <button
               type="button"

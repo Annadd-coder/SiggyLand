@@ -20,6 +20,21 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Profile Auth Setup
+
+The `/profile` section uses server auth + SQLite storage (`data/profile.sqlite`) with:
+
+- MetaMask signature login
+
+Required env vars are listed in `.env.example`.
+Server runtime must be Node.js 22+ (uses `node:sqlite`).
+
+### Minimum env checklist
+
+```bash
+AUTH_SECRET=your-long-random-secret
+```
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

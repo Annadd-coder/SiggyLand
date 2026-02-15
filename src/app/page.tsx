@@ -9,6 +9,7 @@ import BackgroundArt from '@/components/BackgroundArt'
 import CatSticker from '@/components/CatSticker'
 import IntroOverlay from '@/components/IntroOverlay'
 import AnchorLayer, { AnchorPinPct } from '@/components/AnchorLayer'
+import { trackInteraction } from '@/lib/trackInteraction'
 
 // ✅ AudioToggle без SSR, чтобы не ловить hydration mismatch из-за styled-jsx в компоненте
 const AudioToggle = dynamic(() => import('@/components/AudioToggle'), { ssr: false })
@@ -18,6 +19,9 @@ export default function Home() {
   const router = useRouter()
 
   useEffect(() => {
+    trackInteraction({ type: 'visit_home', value: 1 })
+    trackInteraction({ type: 'site_visit', value: 1, metadata: { page: 'home' } })
+
     // запрет скролла на главной
     const html = document.documentElement
     const body = document.body
