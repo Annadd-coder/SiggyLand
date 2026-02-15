@@ -1,0 +1,395 @@
+.page {
+  min-height: calc(100svh - var(--headerH));
+  padding: 24px 0 40px;
+}
+
+.shell {
+  width: min(980px, 92vw);
+  margin: 0 auto;
+  display: grid;
+  gap: 14px;
+  position: relative;
+  z-index: 1;
+}
+
+.topBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(181, 211, 255, 0.36);
+  background: linear-gradient(180deg, rgba(12, 28, 57, 0.86), rgba(6, 16, 35, 0.88));
+  box-shadow: 0 16px 30px rgba(0, 0, 0, 0.35);
+  padding: 12px 14px;
+  color: #f3f9ff;
+}
+
+.topLeft {
+  min-width: 0;
+}
+
+.overline {
+  margin: 0 0 6px;
+  font-size: 0.76rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(216, 236, 255, 0.9);
+  font-weight: 700;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(1.5rem, 2.8vw, 2.1rem);
+  line-height: 1.08;
+  letter-spacing: 0.01em;
+  color: #f7fbff;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+}
+
+.subtitle {
+  margin: 8px 0 0;
+  font-size: 0.94rem;
+  color: rgba(227, 242, 255, 0.9);
+}
+
+.topActions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.navBtn {
+  text-decoration: none;
+  border-radius: 999px;
+  border: 1px solid rgba(193, 220, 255, 0.56);
+  background: rgba(16, 35, 71, 0.9);
+  color: rgba(241, 249, 255, 0.96);
+  padding: 8px 13px;
+  font-weight: 700;
+  transition: border-color 0.14s ease, background 0.14s ease, transform 0.14s ease;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.28);
+}
+
+.navBtn:hover {
+  transform: translateY(-1px);
+  border-color: rgba(196, 222, 255, 0.52);
+  background: rgba(20, 40, 74, 0.7);
+}
+
+.navBtnGhost {
+  background: rgba(10, 24, 49, 0.8);
+}
+
+.panel {
+  border-radius: 16px;
+  border: 1px solid rgba(185, 214, 255, 0.34);
+  background:
+    linear-gradient(180deg, rgba(20, 39, 74, 0.8), rgba(9, 20, 42, 0.84));
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.34);
+  backdrop-filter: blur(6px);
+  padding: 14px;
+  color: #f1f8ff;
+}
+
+.panelTitle {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.sectionHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.muted {
+  font-size: 0.84rem;
+  color: rgba(214, 234, 247, 0.84);
+}
+
+.sessionLine {
+  border-radius: 14px;
+  border: 1px solid rgba(187, 216, 255, 0.34);
+  background: rgba(8, 19, 40, 0.82);
+  padding: 10px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  color: #f1f8ff;
+}
+
+.sessionInfo {
+  min-width: 0;
+}
+
+.sessionWallet {
+  font-weight: 700;
+}
+
+.sessionMeta {
+  margin-top: 3px;
+  color: rgba(214, 234, 248, 0.86);
+  font-size: 0.82rem;
+}
+
+.sessionActions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.statsList {
+  margin-top: 8px;
+  display: grid;
+  gap: 8px;
+}
+
+.statRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding-bottom: 7px;
+  border-bottom: 1px solid rgba(171, 203, 255, 0.16);
+}
+
+.statRow:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.statLabel {
+  color: rgba(220, 239, 252, 0.92);
+  font-size: 0.9rem;
+}
+
+.statValue {
+  font-size: 0.95rem;
+  text-align: right;
+  white-space: nowrap;
+  color: #f4faff;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.field > span {
+  color: rgba(224, 243, 255, 0.92);
+  font-size: 0.85rem;
+}
+
+.field input {
+  width: 100%;
+  border-radius: 11px;
+  border: 1px solid rgba(180, 213, 255, 0.38);
+  background: rgba(4, 14, 30, 0.88);
+  color: rgba(242, 250, 255, 0.96);
+  padding: 10px 11px;
+  outline: none;
+  transition: border-color 0.14s ease, box-shadow 0.14s ease;
+}
+
+.field input::placeholder {
+  color: rgba(171, 203, 230, 0.58);
+}
+
+.field input:focus {
+  border-color: rgba(127, 229, 201, 0.46);
+  box-shadow: 0 0 0 3px rgba(127, 229, 201, 0.13);
+}
+
+.actions {
+  margin-top: 10px;
+  display: flex;
+  gap: 8px;
+}
+
+.primaryBtn,
+.secondaryBtn {
+  border-radius: 11px;
+  padding: 9px 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.14s ease, border-color 0.14s ease, background 0.14s ease;
+}
+
+.primaryBtn {
+  border: 1px solid rgba(154, 229, 206, 0.62);
+  background: linear-gradient(180deg, rgba(127, 229, 201, 0.94), rgba(76, 201, 166, 0.94));
+  color: #0a1324;
+}
+
+.secondaryBtn {
+  border: 1px solid rgba(196, 223, 255, 0.52);
+  background: rgba(14, 32, 64, 0.9);
+  color: #f3f9ff;
+}
+
+.primaryBtn:hover,
+.secondaryBtn:hover {
+  transform: translateY(-1px);
+}
+
+.secondaryBtn:hover {
+  border-color: rgba(207, 231, 255, 0.72);
+  background: rgba(22, 47, 86, 0.94);
+}
+
+.primaryBtn:disabled,
+.secondaryBtn:disabled {
+  opacity: 0.56;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.error {
+  margin-top: 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 120, 120, 0.24);
+  background: rgba(255, 120, 120, 0.12);
+  color: #ffd5d5;
+  padding: 8px 10px;
+  font-size: 0.84rem;
+}
+
+.questBoard {
+  margin-top: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.questRow {
+  border-radius: 12px;
+  border: 1px solid rgba(182, 213, 255, 0.34);
+  background: rgba(8, 19, 39, 0.84);
+  padding: 10px;
+  display: grid;
+  gap: 7px;
+}
+
+.questTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.questTitle {
+  font-weight: 700;
+}
+
+.questBadge {
+  border-radius: 999px;
+  border: 1px solid rgba(173, 205, 255, 0.3);
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  color: rgba(223, 247, 255, 0.94);
+}
+
+.questMeta {
+  color: rgba(214, 234, 248, 0.86);
+  font-size: 0.82rem;
+}
+
+.progressTrack {
+  width: 100%;
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(165, 197, 245, 0.2);
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, rgba(127, 229, 201, 0.95), rgba(165, 238, 253, 0.92));
+}
+
+.activityList {
+  margin-top: 10px;
+  display: grid;
+  gap: 6px;
+}
+
+.activityRow {
+  border-radius: 10px;
+  border: 1px solid rgba(168, 200, 255, 0.2);
+  background: rgba(9, 21, 43, 0.58);
+  padding: 9px 10px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.activityRow time {
+  color: rgba(204, 230, 245, 0.74);
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.empty {
+  margin-top: 8px;
+  color: rgba(217, 238, 251, 0.9);
+}
+
+.authGate {
+  border-radius: 18px;
+  border: 1px solid rgba(188, 216, 255, 0.38);
+  background: linear-gradient(180deg, rgba(18, 37, 70, 0.84), rgba(9, 20, 42, 0.9));
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.36);
+  padding: 18px;
+}
+
+.authTitle {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.authSubtitle {
+  margin: 8px 0 0;
+  color: rgba(227, 243, 255, 0.9);
+}
+
+.authActions {
+  margin-top: 12px;
+}
+
+@media (max-width: 920px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .topBar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .sessionLine {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 620px) {
+  .activityRow {
+    grid-template-columns: 1fr;
+  }
+
+  .activityRow time {
+    white-space: normal;
+  }
+}
