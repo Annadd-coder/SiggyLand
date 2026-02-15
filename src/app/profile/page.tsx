@@ -4,8 +4,6 @@ import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ethers } from 'ethers'
 import { getChainId, hasEthereum, requestAccounts } from '@/lib/eth'
-import { trackInteraction } from '@/lib/trackInteraction'
-import type { AuthSession } from '@/lib/profileAuth'
 import styles from './profile.page.module.css'
 
 type ProfileUser = {
@@ -77,6 +75,13 @@ type SessionApiResponse = {
   ok?: boolean
   authenticated?: boolean
   session?: AuthSession
+}
+
+type AuthSession = {
+  provider: 'wallet'
+  uid: string
+  identifier: string
+  at: number
 }
 
 type WalletChallengeResponse = {
@@ -174,7 +179,6 @@ export default function ProfilePage() {
   const [profileSavedAt, setProfileSavedAt] = useState<number>(0)
 
   const [chainId, setChainId] = useState<string | null>(null)
-  const [visitTrackedForUid, setVisitTrackedForUid] = useState<string>('')
 
   const hydrateProfile = useCallback((nextUser: ProfileUser, nextStats: ProfileStats, nextQuests: QuestSnapshot) => {
     setUser(nextUser)
@@ -234,14 +238,6 @@ export default function ProfilePage() {
       cancelled = true
     }
   }, [user?.wallet])
-
-  useEffect(() => {
-    if (!auth) return
-    if (visitTrackedForUid === auth.uid) return
-    setVisitTrackedForUid(auth.uid)
-    trackInteraction({ type: 'profile_visit', value: 1 })
-    trackInteraction({ type: 'site_visit', value: 1, metadata: { page: 'profile' } })
-  }, [auth, visitTrackedForUid])
 
   async function onMetaMaskAuth() {
     setAuthError(null)
