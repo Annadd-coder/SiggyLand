@@ -22,6 +22,7 @@ type ProcessWithBuiltinModule = NodeJS.Process & {
 
 let dbSingleton: SQLiteDatabase | null = null
 let sqliteModule: SQLiteModule | null = null
+let resolvedDbPath: string | null = null
 
 function getSqliteModule() {
   if (sqliteModule) return sqliteModule
@@ -105,14 +106,68 @@ function migrate(db: SQLiteDatabase) {
   `)
 }
 
+function normalizePath(p: string) {
+  const trimmed = p.trim()
+  if (!trimmed) return ''
+  return path.isAbsolute(trimmed) ? trimmed : path.join(process.cwd(), trimmed)
+}
+
+function canWriteDir(dirPath: string) {
+  try {
+    fs.mkdirSync(dirPath, { recursive: true })
+    fs.accessSync(dirPath, fs.constants.W_OK)
+    const probePath = path.join(dirPath, '.siggy-write-test')
+    fs.writeFileSync(probePath, 'ok', 'utf8')
+    fs.unlinkSync(probePath)
+    return true
+  } catch {
+    return false
+  }
+}
+
+function resolveDbPath() {
+  if (resolvedDbPath) return resolvedDbPath
+
+  const explicitPath = process.env.PROFILE_DB_PATH?.trim()
+  if (explicitPath) {
+    const fullPath = normalizePath(explicitPath)
+    const explicitDir = path.dirname(fullPath)
+    if (canWriteDir(explicitDir)) {
+      resolvedDbPath = fullPath
+      return resolvedDbPath
+    }
+    throw new Error(`PROFILE_DB_PATH directory is not writable: ${explicitDir}`)
+  }
+
+  const cwdData = path.join(process.cwd(), 'data')
+  const tmpData = '/tmp/siggy-data'
+  const configuredDir = process.env.PROFILE_DB_DIR?.trim() || ''
+
+  const candidateDirs = [
+    configuredDir ? normalizePath(configuredDir) : '',
+    cwdData,
+    tmpData,
+  ].filter(Boolean)
+
+  for (const dirPath of candidateDirs) {
+    if (!canWriteDir(dirPath)) continue
+    resolvedDbPath = path.join(dirPath, 'profile.sqlite')
+    if (dirPath !== cwdData) {
+      console.warn(`[profile-db] Using writable fallback path: ${resolvedDbPath}`)
+    }
+    return resolvedDbPath
+  }
+
+  resolvedDbPath = ':memory:'
+  console.warn('[profile-db] No writable filesystem path found, using in-memory sqlite database.')
+  return resolvedDbPath
+}
+
 export function getDb() {
   if (dbSingleton) return dbSingleton
 
   const sqlite = getSqliteModule()
-  const dataDir = path.join(process.cwd(), 'data')
-  fs.mkdirSync(dataDir, { recursive: true })
-
-  const dbPath = path.join(dataDir, 'profile.sqlite')
+  const dbPath = resolveDbPath()
   const db = new sqlite.DatabaseSync(dbPath)
   migrate(db)
   dbSingleton = db

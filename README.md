@@ -28,6 +28,8 @@ The `/profile` section uses server auth + SQLite storage (`data/profile.sqlite`)
 
 Required env vars are listed in `.env.example`.
 Server runtime must be Node.js 22+ (uses `node:sqlite`).
+On serverless platforms with read-only app folders, the app automatically falls back to `/tmp/siggy-data/profile.sqlite`.
+You can also override DB location with `PROFILE_DB_DIR` or `PROFILE_DB_PATH`.
 
 ### Minimum env checklist
 
