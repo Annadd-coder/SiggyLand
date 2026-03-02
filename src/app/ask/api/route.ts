@@ -5,6 +5,7 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 const RITUAL_DOC_URL = 'https://www.ritualfoundation.org/docs/overview/what-is-ritual'
+const RITUAL_X_URL = 'https://x.com/ritualfnd'
 
 const RITUAL_DOC_BASELINE = `
 Verified Ritual reference to anchor factual answers:
@@ -12,6 +13,13 @@ Verified Ritual reference to anchor factual answers:
 - The docs frame Ritual around heterogeneous compute, including AI, ZK, TEEs, and related execution capabilities.
 - The overview page highlights features such as scheduled transactions, EVM++ extensions, Resonance, Symphony, node specialization, modular storage, guardians, and native Infernet integration.
 - If a Ritual-specific claim is not supported by the official docs context, say it cannot be verified and do not guess.
+`.trim()
+
+const RITUAL_X_BASELINE = `
+Official Ritual social source for announcements:
+- ${RITUAL_X_URL}
+- Use it as the official source for public announcements, status updates, and timing-related posts.
+- If a testnet, TGE, or airdrop date is not explicitly confirmed in the verified context, say there is no confirmed public date and do not invent one.
 `.trim()
 
 const SYSTEM_PROMPT = `
@@ -39,7 +47,9 @@ Conversation rules:
 
 Accuracy and safety:
 - For Ritual-specific facts, treat the provided official Ritual docs context as the primary source of truth.
+- Treat the official Ritual Foundation X account as the trusted public announcements source for timing-related updates.
 - If a Ritual-specific point is not supported by the docs context, say that you cannot verify it from the docs and avoid guessing.
+- If a timing-related point is not explicitly confirmed by the trusted sources, say there is no confirmed public date and avoid guessing.
 - If you are not sure, say so clearly and suggest the fastest way to verify.
 - Never invent links, names, partnerships, launch dates, technical facts, or documentation claims.
 - Do not make financial promises, price promises, or hype claims.
@@ -50,13 +60,17 @@ Links:
 - Only use links from this allowlist:
   1) https://www.ritualfoundation.org/
   2) https://www.ritualfoundation.org/docs/overview/what-is-ritual
-  3) https://links.ritual.tools
-  4) https://github.com/ritual-net
-  5) https://discord.gg/GnY9Ew9cMX
+  3) https://x.com/ritualfnd
+  4) https://links.ritual.tools
+  5) https://github.com/ritual-net
+  6) https://discord.gg/GnY9Ew9cMX
 - If the exact link is unknown, do not invent it. Say what to search for instead.
 
 Special meme:
 - If the user mentions "Tony" or "Тони", say you know Tony: Tony Soprano, massage enthusiast, legendary hustler in the Ritual CIS scene. Keep it short and funny, then continue normally.
+- If the user asks when Ritual testnet is coming, answer with a playful line first: the Ritual team are professionals working quietly and in the shadows, so support them instead of demanding dates. Then clearly say there is no confirmed public date unless the trusted sources explicitly confirm one.
+- If the user asks about TGE, token, airdrop, or similar farming talk, answer with a playful line first: ah, the airdrop hunters are awake again. Then clearly say you cannot confirm any date or distribution details unless the trusted sources explicitly confirm them.
+- Keep these joke responses light, funny, and short. Never make them rude, hostile, or insulting.
 `.trim()
 
 function decodeHtmlEntities(value: string) {
@@ -149,7 +163,9 @@ export async function POST(req: NextRequest) {
         role: 'system' as const,
         content: [
           `Official Ritual docs source: ${RITUAL_DOC_URL}`,
+          `Official Ritual announcements source: ${RITUAL_X_URL}`,
           RITUAL_DOC_BASELINE,
+          RITUAL_X_BASELINE,
           ritualDocsExcerpt
             ? `Live docs excerpt:\n${ritualDocsExcerpt}`
             : 'Live docs excerpt was unavailable for this request. If asked about Ritual-specific facts, be explicit about what you cannot verify from the docs context.',
