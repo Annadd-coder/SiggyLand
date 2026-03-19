@@ -22,12 +22,14 @@ type ChatApiResponse = {
 
 const STORAGE_KEY = 'siggy:chat:assistant:v3'
 const HISTORY_LIMIT = 12
+const LEGACY_GREETING_TEXT =
+  "Hi, I'm Siggy. I'm your personal assistant for planning, writing, Ritual research, community replies, and everyday project tasks. I keep things clear, warm, and useful without sounding robotic."
 
 const GREETING: Message = {
   id: 'hello-siggy',
   role: 'assistant',
   text:
-    "Hi, I'm Siggy. I'm your personal assistant for planning, writing, Ritual research, community replies, and everyday project tasks. I keep things clear, warm, and useful without sounding robotic.",
+    "Siggy, at your service. Cat spirit, Ritual native, and a little sharper than the average assistant. Ask for lore, launch copy, Ritual explanations, or a clean answer with some bite.",
   ts: 0,
 }
 
@@ -52,7 +54,14 @@ function parseStoredMessages(raw: string | null) {
       }))
       .filter((item) => item.text.length > 0)
 
-    return safe.length > 0 ? safe : [GREETING]
+    if (safe.length === 0) return [GREETING]
+
+    const [first, ...rest] = safe
+    if (first.role === 'assistant' && (first.id === GREETING.id || first.text === LEGACY_GREETING_TEXT)) {
+      return [{ ...GREETING, ts: first.ts }, ...rest]
+    }
+
+    return safe
   } catch {
     return [GREETING]
   }
@@ -177,10 +186,10 @@ export default function AskPage() {
           <div className={styles.hero}>
             <div className={styles.heroCopy}>
               <p className={styles.eyebrow}>Ask Siggy</p>
-              <h1 className={styles.title}>Your personal Ritual assistant.</h1>
+              <h1 className={styles.title}>The cat spirit of Ritual, on call.</h1>
               <p className={styles.lead}>
-                Clear help for research, writing, planning, and day-to-day project work, with a warm tone and verified
-                Ritual context.
+                Sharp help for Ritual questions, launch notes, lore, and day-to-day project work, with verified
+                context and a little more character than the usual chatbot.
               </p>
             </div>
           </div>
@@ -202,12 +211,12 @@ export default function AskPage() {
               <div className={styles.agentMeta}>
                 <div className={styles.presenceRow}>
                   <span className={styles.presenceDot} aria-hidden="true" />
-                  <span className={styles.presenceText}>{sending ? 'Siggy is thinking...' : 'Siggy online'}</span>
+                  <span className={styles.presenceText}>{sending ? 'Siggy is circling the answer...' : 'Siggy in the grove'}</span>
                 </div>
 
                 <p className={styles.agentNote}>
-                  Ask for help with notes, plans, launch copy, community replies, Ritual explanations, and polished
-                  drafts that still feel natural.
+                  Ask for launch copy, Ritual explanations, sharp replies, a little lore, or polished drafts that do
+                  not sound like they came from a help desk.
                 </p>
               </div>
             </aside>
@@ -216,9 +225,9 @@ export default function AskPage() {
               <header className={styles.chatHead}>
                 <div>
                   <p className={styles.chatEyebrow}>Conversation</p>
-                  <h2 className={styles.chatTitle}>Chat with Siggy</h2>
+                  <h2 className={styles.chatTitle}>Speak with Siggy</h2>
                 </div>
-                <span className={styles.chatStatus}>{sending ? 'Thinking' : 'Ready'}</span>
+                <span className={styles.chatStatus}>{sending ? 'Listening' : 'Awake'}</span>
               </header>
 
               <div className={styles.stream}>
@@ -249,7 +258,7 @@ export default function AskPage() {
 
               <form className={styles.composer} onSubmit={handleSubmit}>
                 <label className={styles.composerLabel} htmlFor={inputId}>
-                  Message for Siggy
+                  What do you want from Siggy?
                 </label>
 
                 <textarea
@@ -258,7 +267,7 @@ export default function AskPage() {
                   value={draft}
                   onChange={(event) => setDraft(event.target.value)}
                   onKeyDown={handleInputKeyDown}
-                  placeholder="For example: write a warm, confident launch note for our community and keep it simple."
+                  placeholder="For example: write a sharp launch note for our Ritual community. Keep it confident, vivid, and clean."
                   rows={4}
                   disabled={sending}
                 />
