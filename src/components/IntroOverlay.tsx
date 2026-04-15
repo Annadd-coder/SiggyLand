@@ -305,7 +305,7 @@ export default function IntroOverlay() {
           transform: translateX(-50%); text-align:center; max-width:min(980px,92vw)
         }
         .title{
-          margin:0 0 12px; font-family:'Fredoka','Baloo 2','Nunito',ui-rounded,system-ui,sans-serif;
+          margin:0 0 12px; font-family:var(--font-site);
           font-weight:900; letter-spacing:.4px; font-size:clamp(36px,6.4vw,76px);
           text-shadow:0 3px 0 rgba(0,0,0,.35)
         }
@@ -330,7 +330,7 @@ export default function IntroOverlay() {
 
         .label{
           position:absolute; transform:translate(-50%,-50%);
-          font-family:'Fredoka','Baloo 2','Nunito',ui-rounded,system-ui,sans-serif;
+          font-family:var(--font-site);
           font-weight:900; letter-spacing:.2px; white-space:nowrap;
           font-size:clamp(14px,1.9vw,20px); color:#06110D;
           padding:8px 12px; border-radius:14px;

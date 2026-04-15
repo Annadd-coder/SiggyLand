@@ -182,7 +182,7 @@ export default function AudioToggle({
           transform: translateX(-50%) translateY(4px);
           padding: 6px 8px;
           border-radius: 10px;
-          font: 800 11px/1 ui-rounded, system-ui, -apple-system, 'Nunito', 'Fredoka', sans-serif;
+          font: 800 11px/1 var(--font-site);
           letter-spacing: .2px;
           color: #06110D;
           background: linear-gradient(180deg,#eafff3,#c9ffe0);
