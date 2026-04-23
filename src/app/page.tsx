@@ -2,6 +2,8 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import Image from 'next/image'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import BackgroundArt from '@/components/BackgroundArt'
@@ -14,6 +16,36 @@ import { trackInteraction } from '@/lib/trackInteraction'
 const AudioToggle = dynamic(() => import('@/components/AudioToggle'), { ssr: false })
 const SHOW_HOME_CATS = false
 
+const loreBeats = [
+  {
+    kicker: '01',
+    title: 'The Grove',
+    text: 'Siggy Land begins as a quiet grove around Ritual: a place where agents, builders, cats, and strange little signals gather before they become useful paths.',
+  },
+  {
+    kicker: '02',
+    title: 'The Sigils',
+    text: 'Every doorway is a sigil. Some point to docs and ecosystem projects, others unlock stories, assistant memory, and future chapters of the world.',
+  },
+  {
+    kicker: '03',
+    title: 'The Keepers',
+    text: 'The cats are not decoration. They are tiny guides for the map: they mark resources, guard lore, and make the whole thing feel less like a dashboard.',
+  },
+]
+
+const nftNotes = [
+  'A Chronicle NFT is a chapter, not a random drop.',
+  'Each issue can preserve releases, community sparks, and Ritual moments.',
+  'Collectors hold a readable memory of how Siggy Land grows over time.',
+]
+
+const assistantNotes = [
+  'Explain Ritual in plain language.',
+  'Turn raw ideas into launch copy or posts.',
+  'Answer lore questions without flattening the magic.',
+]
+
 export default function Home() {
   const curtainRef = useRef<HTMLDivElement | null>(null)
   const router = useRouter()
@@ -21,21 +53,6 @@ export default function Home() {
   useEffect(() => {
     trackInteraction({ type: 'visit_home', value: 1 })
     trackInteraction({ type: 'site_visit', value: 1, metadata: { page: 'home' } })
-
-    // запрет скролла на главной
-    const html = document.documentElement
-    const body = document.body
-    const style = body.style
-
-    const prevHtmlOverflow = html.style.overflow
-    const prevBodyOverflow = body.style.overflow
-    const prevOSB = style.overscrollBehavior
-    const prevTouch = style.touchAction
-
-    html.style.overflow = 'hidden'
-    body.style.overflow = 'hidden'
-    style.overscrollBehavior = 'none'
-    style.touchAction = 'none'
 
     // мягкая навигация
     const onClick = (e: MouseEvent) => {
@@ -70,22 +87,17 @@ export default function Home() {
     links.forEach(l => l.addEventListener('click', onClick as EventListener))
 
     return () => {
-      html.style.overflow = prevHtmlOverflow
-      body.style.overflow = prevBodyOverflow
-      style.overscrollBehavior = prevOSB
-      style.touchAction = prevTouch
       links.forEach(l => l.removeEventListener('click', onClick as EventListener))
     }
   }, [router])
 
   return (
     <main
-      className="pageRoot"
+      className="pageRoot skinHome homePage"
       style={{
         position: 'relative',
         minHeight: 'calc(100svh - var(--headerH))',
-        height: 'calc(100svh - var(--headerH))',
-        overflow: 'hidden',
+        overflow: 'visible',
       }}
     >
       <BackgroundArt
@@ -314,6 +326,122 @@ export default function Home() {
           />
         </>
       )}
+
+      <section className="homeHero" aria-label="Siggy Land">
+        <div className="homeHero__shade" aria-hidden />
+        <a className="homeHero__cue" href="#siggy-lore" aria-label="Read more about Siggy Land">
+          <span />
+        </a>
+      </section>
+
+      <section id="siggy-lore" className="homeBand homeBand--lore">
+        <div className="homeBand__inner">
+          <div className="homeBand__copy">
+            <p className="homeKicker">Lore of the land</p>
+            <h1 className="homeTitle">Siggy Land is a living map, not a menu.</h1>
+            <p className="homeLead">
+              The world is built around signals: small signs that lead people into Ritual, reveal useful paths,
+              and turn ecosystem discovery into a story you can actually remember.
+            </p>
+          </div>
+
+          <div className="loreGrid" aria-label="Siggy Land lore notes">
+            {loreBeats.map((beat) => (
+              <article className="loreTile" key={beat.title}>
+                <p className="tileKicker">{beat.kicker}</p>
+                <h2>{beat.title}</h2>
+                <p>{beat.text}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="homeBand homeBand--split">
+        <div className="homeBand__inner homeSplit">
+          <div className="homeArt">
+            <Image
+              className="homeArt__image"
+              src="/siggyland/what-chronicle-art.png"
+              alt="Siggy Chronicle collectible chapter"
+              width={560}
+              height={560}
+            />
+          </div>
+
+          <div className="homePanel">
+            <p className="homeKicker">Chronicle NFT</p>
+            <h2 className="homeTitle">A collectible memory for each chapter.</h2>
+            <p className="homeLead">
+              The Chronicle turns the best moments of Siggy Land and Ritual into a compact on-chain artifact:
+              readable, warm, and easy to revisit when the world gets bigger.
+            </p>
+
+            <div className="noteStack">
+              {nftNotes.map((note) => (
+                <p key={note}>{note}</p>
+              ))}
+            </div>
+
+            <div className="homeActions">
+              <Link data-softnav="1" className="homeButton" href="/story">
+                Open Story
+              </Link>
+              <span className="homeMeta">Chapter 1 is preparing its first signal.</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="homeBand homeBand--split homeBand--reverse">
+        <div className="homeBand__inner homeSplit">
+          <div className="homePanel">
+            <p className="homeKicker">Ask Siggy</p>
+            <h2 className="homeTitle">The assistant is the voice of the grove.</h2>
+            <p className="homeLead">
+              Siggy helps the world feel understandable. It can answer questions, shape ideas, explain Ritual,
+              and keep the lore vivid without turning everything into plain software copy.
+            </p>
+
+            <div className="siggyList">
+              {assistantNotes.map((note) => (
+                <p key={note}>{note}</p>
+              ))}
+            </div>
+
+            <div className="homeActions">
+              <Link data-softnav="1" className="homeButton" href="/ask">
+                Ask Siggy
+              </Link>
+              <Link data-softnav="1" className="homeGhost" href="/what">
+                Learn the World
+              </Link>
+            </div>
+          </div>
+
+          <div className="homeArt homeArt--ask">
+            <Image
+              className="homeArt__image"
+              src="/siggyland/what-ask-art.png"
+              alt="Ask Siggy assistant"
+              width={560}
+              height={560}
+            />
+          </div>
+        </div>
+      </section>
+
+      <section className="homeFinal">
+        <div className="homeFinal__inner">
+          <p className="homeKicker">Choose a doorway</p>
+          <h2 className="homeTitle">The map gets deeper from here.</h2>
+          <div className="homeFinal__links">
+            <Link data-softnav="1" href="/what">What is Siggy Land</Link>
+            <Link data-softnav="1" href="/ask">Ask Siggy</Link>
+            <Link data-softnav="1" href="/story">Chronicle</Link>
+          </div>
+        </div>
+      </section>
 
       {/* локальная шторка для мягкого перехода */}
       <div ref={curtainRef} className="softCurtain" aria-hidden />
