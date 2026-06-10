@@ -10,7 +10,7 @@ type Item = { href: string; label: string; intro?: 'what'|'ask'|'story' }
 const items: Item[] = [
   { href: '/what',  label: 'WHAT IS',   intro: 'what'  },
   { href: '/ask',   label: 'ASK SIGGY', intro: 'ask'   },
-  { href: '/story', label: 'STORY',     intro: 'story' },
+  { href: '/story', label: 'NFT STORY', intro: 'story' },
 ]
 
 export default function NavBar() {

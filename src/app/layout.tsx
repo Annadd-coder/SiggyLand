@@ -32,7 +32,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         {/* глобальная шторка для мягких переходов */}
         <SoftCurtain />
         {/* компактная кнопка музыки (поверх всего) */}
-        <AudioToggle src="/siggyland/audio/siggy-winter-loop.mp3" volume={0.18} />
+        <AudioToggle src="/siggyland/audio/siggy-summer-loop.wav" volume={0.16} />
       </body>
     </html>
   )

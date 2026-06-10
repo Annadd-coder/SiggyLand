@@ -2,7 +2,7 @@
 
 import React from 'react'
 
-const STORY_LAUNCH_AT = new Date('2026-06-01T00:00:00Z').getTime()
+const STORY_LAUNCH_AT = new Date('2026-07-01T00:00:00Z').getTime()
 
 type CountdownState = {
   days: number
@@ -102,7 +102,7 @@ export default function StoryPage() {
         <div style={shellStyle}>
           <p style={metaStyle}></p>
           <h1 style={titleStyle}>Chapter 1</h1>
-          <p style={dateStyle}>June 1, 2026 · 12:00 UTC</p>
+          <p style={dateStyle}>July 1, 2026 · 00:00 UTC</p>
 
           <div
             style={{
