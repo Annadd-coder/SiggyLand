@@ -97,13 +97,68 @@ function migrate(db: SQLiteDatabase) {
       created_at INTEGER NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS chronicles (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      wallet_address TEXT NOT NULL,
+      title TEXT NOT NULL,
+      idea TEXT NOT NULL,
+      recipe TEXT NOT NULL,
+      primitives TEXT NOT NULL,
+      primitive_mask INTEGER NOT NULL DEFAULT 0,
+      content_hash TEXT NOT NULL UNIQUE,
+      metadata_version INTEGER NOT NULL DEFAULT 1,
+      created_at INTEGER NOT NULL,
+      minted_tx TEXT,
+      token_id TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS agent_manifests (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      wallet_address TEXT NOT NULL,
+      name TEXT NOT NULL,
+      blueprint_id TEXT NOT NULL,
+      skill_pack_id TEXT NOT NULL,
+      manifest TEXT NOT NULL,
+      manifest_hash TEXT NOT NULL UNIQUE,
+      signature TEXT NOT NULL,
+      created_at INTEGER NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS agent_runs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      wallet_address TEXT NOT NULL,
+      agent_name TEXT NOT NULL,
+      blueprint_id TEXT NOT NULL,
+      skill_pack_id TEXT NOT NULL,
+      task TEXT NOT NULL,
+      output TEXT NOT NULL,
+      output_hash TEXT NOT NULL UNIQUE,
+      signature TEXT NOT NULL,
+      created_at INTEGER NOT NULL
+    );
+
     CREATE INDEX IF NOT EXISTS idx_auth_identities_user_id
       ON auth_identities(user_id);
     CREATE INDEX IF NOT EXISTS idx_interactions_user_type_time
       ON interaction_events(user_id, type, created_at DESC);
     CREATE INDEX IF NOT EXISTS idx_sessions_user_expires
       ON sessions(user_id, expires_at);
+    CREATE INDEX IF NOT EXISTS idx_chronicles_wallet_time
+      ON chronicles(wallet_address, created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_agent_manifests_wallet_time
+      ON agent_manifests(wallet_address, created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_agent_runs_wallet_time
+      ON agent_runs(wallet_address, created_at DESC);
   `)
+
+  ensureColumn(db, 'chronicles', 'cover_image', 'TEXT')
+  ensureColumn(db, 'chronicles', 'cover_prompt', 'TEXT')
+}
+
+function ensureColumn(db: SQLiteDatabase, table: string, column: string, definition: string) {
+  const rows = db.prepare(`PRAGMA table_info(${table})`).all() as Array<{ name?: string }>
+  if (rows.some((row) => row.name === column)) return
+  db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`)
 }
 
 function normalizePath(p: string) {

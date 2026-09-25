@@ -1,198 +1,46 @@
-'use client'
+import type { Metadata } from 'next'
+import Link from 'next/link'
+import styles from './story.module.css'
 
-import React from 'react'
-
-const STORY_LAUNCH_AT = new Date('2026-06-01T00:00:00Z').getTime()
-
-type CountdownState = {
-  days: number
-  hours: number
-  minutes: number
-  seconds: number
-}
-
-function getCountdownState(now = Date.now()): CountdownState {
-  const diff = Math.max(0, STORY_LAUNCH_AT - now)
-  const totalSeconds = Math.floor(diff / 1000)
-
-  return {
-    days: Math.floor(totalSeconds / 86400),
-    hours: Math.floor((totalSeconds % 86400) / 3600),
-    minutes: Math.floor((totalSeconds % 3600) / 60),
-    seconds: totalSeconds % 60,
-  }
-}
-
-function pad(value: number) {
-  return String(value).padStart(2, '0')
+export const metadata: Metadata = {
+  title: 'The story awaits · SiggyLand',
+  description: 'Awaiting mainnet. A quiet world. An unwritten chapter. Soon, the story begins to move.',
 }
 
 export default function StoryPage() {
-  const [countdown, setCountdown] = React.useState<CountdownState>(() => getCountdownState())
-  const siteFont = 'var(--font-site)'
-
-  React.useEffect(() => {
-    const timerId = window.setInterval(() => {
-      setCountdown(getCountdownState())
-    }, 1000)
-
-    return () => window.clearInterval(timerId)
-  }, [])
-
-  const shellStyle: React.CSSProperties = {
-    width: 'min(980px, 100%)',
-    background: 'rgba(11, 15, 13, 0.92)',
-    border: '1px solid rgba(255, 231, 176, 0.18)',
-    borderRadius: 24,
-    boxShadow: '0 20px 48px rgba(0,0,0,.34)',
-    padding: '28px',
-    color: '#fff9ea',
-  }
-
-  const metaStyle: React.CSSProperties = {
-    margin: 0,
-    fontFamily: siteFont,
-    textTransform: 'uppercase',
-    letterSpacing: '0.18em',
-    fontSize: 12,
-    fontWeight: 800,
-    color: 'rgba(255, 235, 188, 0.82)',
-  }
-
-  const titleStyle: React.CSSProperties = {
-    margin: '14px 0 10px',
-    fontFamily: siteFont,
-    fontSize: 'clamp(32px, 5vw, 56px)',
-    lineHeight: 0.94,
-    letterSpacing: '-0.02em',
-    fontWeight: 900,
-    color: '#fff9ea',
-  }
-
-  const dateStyle: React.CSSProperties = {
-    margin: 0,
-    fontFamily: siteFont,
-    fontSize: 14,
-    letterSpacing: '0.08em',
-    textTransform: 'uppercase',
-    color: 'rgba(236, 241, 224, 0.76)',
-  }
-
   return (
-    <main
-      className="pageRoot skinStory skinStoryBlue"
-      style={{
-        position: 'relative',
-        minHeight: 'calc(100svh - var(--headerH))',
-        overflow: 'auto',
-      }}
-    >
-      <section
-        style={{
-          position: 'relative',
-          zIndex: 1,
-          minHeight: 'calc(100svh - var(--headerH))',
-          display: 'grid',
-          alignItems: 'center',
-          width: 'min(1120px, 92vw)',
-          margin: '0 auto',
-          padding: '32px 0 48px',
-        }}
-      >
-        <div style={shellStyle}>
-          <p style={metaStyle}></p>
-          <h1 style={titleStyle}>Chapter 1</h1>
-          <p style={dateStyle}>June 1, 2026 · 12:00 UTC</p>
-
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'minmax(220px, 1.35fr) repeat(3, minmax(110px, 1fr))',
-              gap: 12,
-              marginTop: 24,
-            }}
-          >
-            <div
-              style={{
-                borderRadius: 20,
-                border: '1px solid rgba(255, 232, 180, 0.14)',
-                background: 'rgba(20, 28, 23, 0.92)',
-                padding: '24px 18px 20px',
-              }}
-            >
-              <div
-                style={{
-                  fontFamily: siteFont,
-                  fontSize: 'clamp(84px, 11vw, 148px)',
-                  lineHeight: 0.9,
-                  letterSpacing: '-0.04em',
-                  fontWeight: 900,
-                  color: '#fff9ea',
-                  fontVariantNumeric: 'tabular-nums',
-                }}
-              >
-                {countdown.days}
-              </div>
-              <div
-                style={{
-                  marginTop: 10,
-                  fontFamily: siteFont,
-                  fontSize: 11,
-                  fontWeight: 800,
-                  letterSpacing: '0.18em',
-                  textTransform: 'uppercase',
-                  color: 'rgba(234, 239, 214, 0.78)',
-                }}
-              >
-                Days
-              </div>
-            </div>
-
-            {[
-              { label: 'Hours', value: pad(countdown.hours) },
-              { label: 'Minutes', value: pad(countdown.minutes) },
-              { label: 'Seconds', value: pad(countdown.seconds) },
-            ].map((unit) => (
-              <div
-                key={unit.label}
-                style={{
-                  borderRadius: 16,
-                  border: '1px solid rgba(255, 232, 180, 0.12)',
-                  background: 'rgba(20, 28, 23, 0.88)',
-                  padding: '20px 14px 16px',
-                  textAlign: 'center',
-                }}
-              >
-                <div
-                  style={{
-                    fontFamily: siteFont,
-                    fontSize: 'clamp(48px, 6vw, 76px)',
-                    lineHeight: 0.94,
-                    letterSpacing: '-0.03em',
-                    fontWeight: 900,
-                    color: '#fff9ea',
-                    fontVariantNumeric: 'tabular-nums',
-                  }}
-                >
-                  {unit.value}
-                </div>
-                <div
-                  style={{
-                    marginTop: 10,
-                    fontFamily: siteFont,
-                    fontSize: 11,
-                    fontWeight: 800,
-                    letterSpacing: '0.18em',
-                    textTransform: 'uppercase',
-                    color: 'rgba(234, 239, 214, 0.78)',
-                  }}
-                >
-                  {unit.label}
-                </div>
-              </div>
-            ))}
-          </div>
+    <main className={styles.page}>
+      <div className={styles.stars} aria-hidden="true" />
+      <section className={styles.stage} aria-labelledby="story-title">
+        <div className={styles.topline}>
+          <span>SiggyLand / The story</span>
+          <span className={styles.chapter}>Chapter 01 <span>—</span> Unwritten</span>
         </div>
+
+        <div className={styles.portal} aria-hidden="true">
+          <div className={styles.orbit} />
+          <div className={styles.ring} />
+          <div className={styles.core} />
+          <span className={styles.spark} />
+        </div>
+
+        <div className={styles.content}>
+          <p className={styles.status}><span /> Awaiting mainnet</p>
+          <h1 id="story-title">The story is about<br />to <em>awaken.</em></h1>
+          <p className={styles.description}>
+            Every world has a moment before it begins.<br />
+            This is ours.
+          </p>
+          <div className={styles.divider} aria-hidden="true" />
+          <p className={styles.promise}>When mainnet arrives, the stillness breaks.<br />And the first chapter begins to move.</p>
+          <Link className={styles.link} href="/">Return to SiggyLand <span aria-hidden="true">↗</span></Link>
+        </div>
+
+        <footer className={styles.footer}>
+          <span className={styles.soon}><span /> Mainnet coming soon</span>
+          <span>Something stirs beyond the silence.</span>
+          <span className={styles.edition}>The beginning / 001</span>
+        </footer>
       </section>
     </main>
   )

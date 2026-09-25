@@ -67,7 +67,6 @@ contract PredictionMarkets is ReentrancyGuard, Ownable {
       volumeUsdc: 0,
       resolved: false,
       outcomeYes: false,
-      creator: msg.sender,
       creator: msg.sender
     });
 
